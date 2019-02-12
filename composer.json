@@ -1,6 +1,6 @@
 {
-  "name": "elgentos/serversideanalytics",
-  "description": "Elgentos_ServerSideAnalytics",
+  "name": "elgentos/serversideanalytics2",
+  "description": "Elgentos_ServerSideAnalytics for magento 2",
   "require": {
     "php": "~7.1.0",
     "theiconic/php-ga-measurement-protocol": "^2.0"
