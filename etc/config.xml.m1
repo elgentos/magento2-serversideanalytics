@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Elgentos_ServerSideAnalytics>
+            <version>0.1.2</version>
+        </Elgentos_ServerSideAnalytics>
+    </modules>
+    <global>
+        <models>
+            <elgentos_serversideanalytics>
+                <class>Elgentos_ServerSideAnalytics_Model</class>
+            </elgentos_serversideanalytics>
+            <googleanalytics>
+                <rewrite>
+                    <observer>Elgentos_ServerSideAnalytics_Model_GoogleAnalytics_Observer</observer>
+                </rewrite>
+            </googleanalytics>
+        </models>
+        <helpers>
+            <elgentos_serversideanalytics>
+                <class>Elgentos_ServerSideAnalytics_Helper</class>
+            </elgentos_serversideanalytics>
+        </helpers>
+
+        <events>
+            <!-- Save Google Analytics User ID for current session in order for later retrieval -->
+            <sales_order_place_before>
+                <observers>
+                    <elgentos_serversideanalytics_sales_order_place_before_observer>
+                        <class>Elgentos_ServerSideAnalytics_Model_Observer</class>
+                        <method>saveGaUserId</method>
+                    </elgentos_serversideanalytics_sales_order_place_before_observer>
+                </observers>
+            </sales_order_place_before>
+            <!-- Send purchase event to GA when invoice is paid -->
+            <sales_order_payment_pay>
+                <observers>
+                    <elgentos_serversideanalytics_sales_order_payment_pay_observer>
+                        <class>Elgentos_ServerSideAnalytics_Model_Observer</class>
+                        <method>sendPurchaseEvent</method>
+                    </elgentos_serversideanalytics_sales_order_payment_pay_observer>
+                </observers>
+            </sales_order_payment_pay>
+            <!-- For testing purposes -->
+            <test_event_for_serversideanalytics>
+                <observers>
+                    <elgentos_serversideanalytics_observer>
+                        <class>Elgentos_ServerSideAnalytics_Model_Observer</class>
+                        <method>sendPurchaseEvent</method>
+                    </elgentos_serversideanalytics_observer>
+                </observers>
+            </test_event_for_serversideanalytics>
+        </events>
+
+        <resources>
+            <elgentos_serversideanalytics_setup>
+                <setup>
+                    <module>Elgentos_ServerSideAnalytics</module>
+                </setup>
+            </elgentos_serversideanalytics_setup>
+        </resources>
+    </global>
+</config>

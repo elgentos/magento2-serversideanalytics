@@ -1,0 +1,23 @@
+{
+  "name": "elgentos/serversideanalytics",
+  "description": "Elgentos_ServerSideAnalytics",
+  "type": "magento2-module",
+  "authors": [
+    {
+      "name": "peterjaap",
+      "email": "peterjaap@elgentos.nl"
+    }
+  ],
+  "require": {
+    "php": "~7.1.0",
+    "theiconic/php-ga-measurement-protocol": "^2.0"
+  },
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "Elgentos\\ServerSideAnalytics\\": ""
+    }
+  }
+}

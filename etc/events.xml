@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="sales_order_place_before">
+        <observer name="elgentos_serversideanalytics_sales_order_place_before_observer" instance="Elgentos\ServerSideAnalytics\Observer\SaveGaUserId"/>
+    </event>
+    <event name="sales_order_payment_pay">
+        <observer name="elgentos_serversideanalytics_sales_order_payment_pay_observer" instance="Elgentos\ServerSideAnalytics\Observer\SendPurchaseEvent"/>
+    </event>
+    <event name="test_event_for_serversideanalytics">
+        <observer name="elgentos_serversideanalytics_observer" instance="Elgentos\ServerSideAnalytics\Observer\SendPurchaseEvent"/>
+    </event>
+    <event name="checkout_onepage_controller_success_action">
+        <observer name="googleanalytics_order_success" disabled="true" />
+    </event>
+    <event name="multishipping_checkout_controller_success_action">
+        <observer name="googleanalytics_order_success" disabled="true"/>
+    </event>
+</config>
