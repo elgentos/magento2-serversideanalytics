@@ -12,10 +12,9 @@ Another reason why this problem arises is that people decide to pay at a later p
 
 ## Further info
 - Compatible with GA Measurement Protocol version 1;
-- Debugging is enabled when Magento is in developer mode. See `var/log/elgentos_serversideanalytics_debug_response.log` for the log;
+- Debugging is enabled when Magento is in developer mode. See `var/log/system.log` for the log;
 - Exceptions will be logged to `var/log/exceptions.log`;
 - The products in the payload are retrieve on invoice-basis, not on order-basis;
 - An event has been added for you to add or overwrite custom fields to products in the purchase event; `elgentos_serversideanalytics_product_item_transport_object`;
 - An event has been added for you to add or overwrite fields to tracking data in the purchase event; `elgentos_serversideanalytics_tracking_data_transport_object`;
-- Testing can be done by dispatching `test_event_for_serversideanalytics` with a `$payment` (`Mage_Sales_Order_Payment`) object in the payload;
-- Error messages can be translated by adding a `app/locale/your_LOCALE/Elgentos_ServerSideAnalytics.csv` file.
+- Testing can be done by dispatching `test_event_for_serversideanalytics` with a `$payment` (`\Magento\Sales\Order\Payment`) object in the payload;
