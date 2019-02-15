@@ -6,7 +6,6 @@
     "theiconic/php-ga-measurement-protocol": "^2.0"
   },
   "type": "magento2-module",
-  "version": "0.1.1",
   "authors": [
     {
       "name": "peterjaap",
