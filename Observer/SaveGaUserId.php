@@ -2,6 +2,7 @@
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
+use Elgentos\ServerSideAnalytics\Model\GAClient;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
@@ -20,7 +21,7 @@ class SaveGaUserId implements ObserverInterface
      */
     private $cookieManager;
     /**
-     * @var \Elgentos\ServerSideAnalytics\Model\GAClient
+     * @var GAClient
      */
     private $gaclient;
 
@@ -29,12 +30,12 @@ class SaveGaUserId implements ObserverInterface
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Framework\Stdlib\CookieManagerInterface $cookieManager
-     * @param \Elgentos\ServerSideAnalytics\Model\GAClient $gaclient
+     * @param GAClient $gaclient
      */
     public function __construct(\Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
                                 \Psr\Log\LoggerInterface $logger,
                                 \Magento\Framework\Stdlib\CookieManagerInterface $cookieManager,
-                                \Elgentos\ServerSideAnalytics\Model\GAClient $gaclient)
+                                GAClient $gaclient)
     {
         $this->scopeConfig = $scopeConfig;
         $this->logger = $logger;
@@ -50,12 +51,12 @@ class SaveGaUserId implements ObserverInterface
 
     public function execute(Observer $observer)
     {
-        if (!$this->scopeConfig->getValue(\Magento\GoogleAnalytics\Helper\Data::XML_PATH_ACTIVE)) {
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED)) {
             return;
         }
 
-        if (!$this->scopeConfig->getValue(\Magento\GoogleAnalytics\Helper\Data::XML_PATH_ACCOUNT)) {
-            $this->logger->info('Google Analytics extension and ServerSideAnalytics extension are activated but no Google Analytics account number has been found.');
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_UA)) {
+            $this->logger->info('No Google Analytics account number has been found in the ServerSideAnalytics configuration.');
             return;
         }
 
@@ -87,7 +88,7 @@ class SaveGaUserId implements ObserverInterface
 
         $gaUserId = implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
 
-        $order->setGaUserId($gaUserId);
+        $order->setData('ga_user_id', $gaUserId);
     }
 
 }

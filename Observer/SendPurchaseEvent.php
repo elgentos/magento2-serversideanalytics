@@ -2,6 +2,7 @@
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
+use Elgentos\ServerSideAnalytics\Model\GAClient;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
@@ -24,11 +25,12 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private $event;
 
-    public function __construct(\Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Psr\Log\LoggerInterface $logger,
-                                \Elgentos\ServerSideAnalytics\Model\GAClient $gaclient,
-                                \Magento\Framework\Event\ManagerInterface $event)
-    {
+    public function __construct(
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Psr\Log\LoggerInterface $logger,
+        \Elgentos\ServerSideAnalytics\Model\GAClient $gaclient,
+        \Magento\Framework\Event\ManagerInterface $event
+    ) {
         $this->scopeConfig = $scopeConfig;
         $this->logger = $logger;
         $this->gaclient = $gaclient;
@@ -40,11 +42,12 @@ class SendPurchaseEvent implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        if (!$this->scopeConfig->getValue(\Magento\GoogleAnalytics\Helper\Data::XML_PATH_ACTIVE)) {
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED)) {
             return;
         }
-        if (!$this->scopeConfig->getValue(\Magento\GoogleAnalytics\Helper\Data::XML_PATH_ACCOUNT)) {
-            $this->logger->info('Google Analytics extension and ServerSideAnalytics extension are activated but no Google Analytics account number has been found.');
+        $ua = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_UA);
+        if (!$ua) {
+            $this->logger->info('No Google Analytics account number has been found in the ServerSideAnalytics configuration.');
             return;
         }
 
@@ -56,65 +59,72 @@ class SendPurchaseEvent implements ObserverInterface
         /** @var \Magento\Sales\Model\Order $order */
         $order = $payment->getOrder();
 
-        if (!$order->getGaUserId()) {
+        if (!$order->getData('ga_user_id')) {
             return;
         }
 
         /** @var \Elgentos\ServerSideAnalytics\Model\GAClient $client */
         $client = $this->gaclient;
 
-        try {
-            $trackingDataObject = new \Magento\Framework\DataObject([
-                'tracking_id' => $this->scopeConfig->getValue(\Magento\GoogleAnalytics\Helper\Data::XML_PATH_ACCOUNT),
-                'client_id' => $order->getGaUserId(),
-                'ip_override' => $order->getRemoteIp(),
-                'document_path' => '/checkout/onepage/success/'
-            ]);
+        $uas = explode(',', $ua);
+        $uas = array_filter($uas);
+        $uas = array_map('trim', $uas);
 
-            $this->event->dispatch('elgentos_serversideanalytics_tracking_data_transport_object', ['tracking_data_object' => $trackingDataObject]);
-            $client->setTrackingData($trackingDataObject);
-
-            $client->setTransactionData(
-                new \Magento\Framework\DataObject(
-                    [
-                        'transaction_id' => $order->getIncrementId(),
-                        'affiliation' => $order->getStoreName(),
-                        'revenue' => $invoice->getBaseGrandTotal(),
-                        'tax' => $invoice->getTaxAmount(),
-                        'shipping' => $this->getPaidShippingCosts($invoice),
-                        'coupon_code' => $order->getCouponCode()
-                    ]
-                )
-            );
-
-            $products = [];
-            /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
-            foreach ($invoice->getAllItems() as $item) {
-                if (!$item->isDeleted() && !$item->getOrderItem()->getParentItemId()) {
-                    $product = new \Magento\Framework\DataObject([
-                        'sku' => $item->getSku(),
-                        'name' => $item->getName(),
-                        'price' => $this->getPaidProductPrice($item->getOrderItem()),
-                        'quantity' => $item->getOrderItem()->getQtyOrdered(),
-                        'position' => $item->getId()
-                    ]);
-                    $this->event->dispatch('elgentos_serversideanalytics_product_item_transport_object', ['product' => $product, 'item' => $item]);
-                    $products[] = $product;
-                }
+        $products = [];
+        /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
+        foreach ($invoice->getAllItems() as $item) {
+            if (!$item->isDeleted() && !$item->getOrderItem()->getParentItemId()) {
+                $product = new \Magento\Framework\DataObject([
+                    'sku' => $item->getSku(),
+                    'name' => $item->getName(),
+                    'price' => $this->getPaidProductPrice($item->getOrderItem()),
+                    'quantity' => $item->getOrderItem()->getQtyOrdered(),
+                    'position' => $item->getId()
+                ]);
+                $this->event->dispatch('elgentos_serversideanalytics_product_item_transport_object',
+                    ['product' => $product, 'item' => $item]);
+                $products[] = $product;
             }
+        }
 
-            $client->addProducts($products);
+        $trackingDataObject = new \Magento\Framework\DataObject([
+            'client_id' => $order->getData('ga_user_id'),
+            'ip_override' => $order->getRemoteIp(),
+            'document_path' => '/checkout/onepage/success/'
+        ]);
 
-            $client->firePurchaseEvent();
-        } catch (\Exception $e) {
-           $this->logger->info($e);
+        $client->setTransactionData(
+            new \Magento\Framework\DataObject(
+                [
+                    'transaction_id' => $order->getIncrementId(),
+                    'affiliation' => $order->getStoreName(),
+                    'revenue' => $invoice->getBaseGrandTotal(),
+                    'tax' => $invoice->getTaxAmount(),
+                    'shipping' => $this->getPaidShippingCosts($invoice),
+                    'coupon_code' => $order->getCouponCode()
+                ]
+            )
+        );
+
+        $client->addProducts($products);
+
+        foreach ($uas as $ua) {
+            try {
+                $trackingDataObject->setData('tracking_id', $ua);
+                $client->setTrackingData($trackingDataObject);
+                $this->event->dispatch('elgentos_serversideanalytics_tracking_data_transport_object',
+                    ['tracking_data_object' => $trackingDataObject]);
+                $client->firePurchaseEvent();
+            } catch (\Exception $e) {
+                $this->logger->info($e);
+            }
         }
     }
 
     /**
      * Get the actual price the customer also saw in it's cart.
      *
-     * @param  \Magento\Sales\Model\Order\Item $orderItem
+     * @param \Magento\Sales\Model\Order\Item $orderItem
      *
      * @return float
      */
@@ -126,7 +136,7 @@ class SendPurchaseEvent implements ObserverInterface
     }
 
     /**
-     * @param  \Magento\Sales\Model\Order\Invoice $invoice
+     * @param \Magento\Sales\Model\Order\Invoice $invoice
      *
      * @return float
      */
