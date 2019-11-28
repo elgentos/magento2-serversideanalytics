@@ -5,6 +5,7 @@ namespace Elgentos\ServerSideAnalytics\Observer;
 use Elgentos\ServerSideAnalytics\Model\GAClient;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Store\Model\ScopeInterface;
 
 class SendPurchaseEvent implements ObserverInterface
 {
@@ -42,10 +43,10 @@ class SendPurchaseEvent implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED)) {
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)) {
             return;
         }
-        $ua = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_UA);
+        $ua = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_UA, ScopeInterface::SCOPE_STORE);
         if (!$ua) {
             $this->logger->info('No Google Analytics account number has been found in the ServerSideAnalytics configuration.');
             return;
