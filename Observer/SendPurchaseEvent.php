@@ -64,9 +64,6 @@ class SendPurchaseEvent implements ObserverInterface
             return;
         }
 
-        /** @var \Elgentos\ServerSideAnalytics\Model\GAClient $client */
-        $client = $this->gaclient;
-
         $uas = explode(',', $ua);
         $uas = array_filter($uas);
         $uas = array_map('trim', $uas);
@@ -94,20 +91,29 @@ class SendPurchaseEvent implements ObserverInterface
             'document_path' => '/checkout/onepage/success/'
         ]);
 
-        $client->setTransactionData(
-            new \Magento\Framework\DataObject(
-                [
-                    'transaction_id' => $order->getIncrementId(),
-                    'affiliation' => $order->getStoreName(),
-                    'revenue' => $invoice->getBaseGrandTotal(),
-                    'tax' => $invoice->getTaxAmount(),
-                    'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
-                    'coupon_code' => $order->getCouponCode()
-                ]
-            )
-        );
+        try {
+            /** @var \Elgentos\ServerSideAnalytics\Model\GAClient $client */
+            $client = $this->gaclient;
+            
+            $client->setTransactionData(
+                new \Magento\Framework\DataObject(
+                    [
+                        'transaction_id' => $order->getIncrementId(),
+                        'affiliation' => $order->getStoreName(),
+                        'revenue' => $invoice->getBaseGrandTotal(),
+                        'tax' => $invoice->getTaxAmount(),
+                        'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
+                        'coupon_code' => $order->getCouponCode()
+                    ]
+                )
+            );
 
-        $client->addProducts($products);
+            $client->addProducts($products);
+        } catch (\Exception $e) {
+            $this->logger->info($e);
+            return;
+        }
+
 
         foreach ($uas as $ua) {
             try {
