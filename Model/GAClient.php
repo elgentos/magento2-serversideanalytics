@@ -97,10 +97,13 @@ class GAClient {
     {
         $this->analytics
             ->setTransactionId($data->getTransactionId())
-            ->setAffiliation($data->getAffiliation())
             ->setRevenue($data->getRevenue())
             ->setTax($data->getTax())
             ->setShipping($data->getShipping());
+
+        if ($data->getAffiliation()) {
+            $this->analytics->setAffiliation($data->getAffiliation());
+        }
 
         if ($data->getCouponCode()) {
             $this->analytics->setCouponCode($data->getCouponCode());
