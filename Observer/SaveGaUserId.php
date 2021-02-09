@@ -61,12 +61,30 @@ class SaveGaUserId implements ObserverInterface
             return;
         }
 
+        $gaUserId = $this->getUserIdFromCookie();
+        if ($gaUserId === null) {
+            $gaCookieUserId = random_int(1E8, 1E9);
+            $gaCookieTimestamp = time();
+            $gaUserId = implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
+            $this->logger->info('Google Analytics cookie not found, generated temporary value: ' . $gaUserId);
+        }
+
         $order = $observer->getEvent()->getOrder();
 
+        $order->setData('ga_user_id', $gaUserId);
+    }
+
+    /**
+     * Try to get the Google Analytics User ID from the cookie
+     *
+     * @return string|null
+     */
+    protected function getUserIdFromCookie()
+    {
         $gaCookie = explode('.', $this->cookieManager->getCookie('_ga'));
 
         if (empty($gaCookie) || count($gaCookie) < 4) {
-            return;
+            return null;
         }
 
         list(
@@ -77,19 +95,14 @@ class SaveGaUserId implements ObserverInterface
             ) = $gaCookie;
 
         if (!$gaCookieUserId || !$gaCookieTimestamp) {
-            return;
+            return null;
         }
 
-        $client = $this->gaclient;
-
-        if ($gaCookieVersion != 'GA' . $client->getVersion()) {
+        if ($gaCookieVersion != 'GA' . $this->gaclient->getVersion()) {
             $this->logger->info('Google Analytics cookie version differs from Measurement Protocol API version; please upgrade.');
-            return;
+            return null;
         }
 
-        $gaUserId = implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
-
-        $order->setData('ga_user_id', $gaUserId);
+        return implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
     }
-
 }
