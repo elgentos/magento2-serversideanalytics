@@ -63,6 +63,10 @@ class SendPurchaseEvent implements ObserverInterface
         if (!$order->getData('ga_user_id')) {
             return;
         }
+        if ($order->getData('ga_sent_at')) {
+            $this->logger->info('Google Analytics event was already sent for order #' . $order->getIncrementId());
+            return;
+        }
 
         $uas = explode(',', $ua);
         $uas = array_filter($uas);
@@ -125,6 +129,13 @@ class SendPurchaseEvent implements ObserverInterface
             } catch (\Exception $e) {
                 $this->logger->info($e);
             }
+        }
+
+        try {
+            $order->setData('ga_sent_at', time());
+            $order->save();
+        } catch (\Exception $e) {
+            $this->logger->info($e);
         }
     }
 

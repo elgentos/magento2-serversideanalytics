@@ -28,6 +28,20 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     ]
                 );
         }
+
+        if ($connection->tableColumnExists('sales_order', 'ga_sent_at') === false) {
+            $connection->addColumn(
+                $setup->getTable('sales_order'),
+                'ga_sent_at',
+                [
+                    'type' => Table::TYPE_DATETIME,
+                    'nullable'  => true,
+                    'after'     => 'ga_user_id',
+                    'comment'   => 'Google Analytics Sent At'
+                ]
+            );
+        }
+
         $installer->endSetup();
     }
 }
