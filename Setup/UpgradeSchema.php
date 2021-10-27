@@ -17,17 +17,32 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         if ($connection->tableColumnExists('sales_order', 'ga_user_id') === false) {
             $connection->addColumn(
-                    $setup->getTable('sales_order'),
-                    'ga_user_id',
-                    [
-                        'type' => Table::TYPE_TEXT,
-                        'nullable'  => true,
-                        'length'    => 255,
-                        'after'     => null,
-                        'comment'   => 'Google Analytics User ID for Server Side Analytics'
-                    ]
-                );
+                $setup->getTable('sales_order'),
+                'ga_user_id',
+                [
+                    'type' => Table::TYPE_TEXT,
+                    'nullable'  => true,
+                    'length'    => 255,
+                    'after'     => null,
+                    'comment'   => 'Google Analytics User ID for Server Side Analytics'
+                ]
+            );
         }
+
+        if ($connection->tableColumnExists('quote', 'ga_user_id') === false) {
+            $connection->addColumn(
+                $setup->getTable('quote'),
+                'ga_user_id',
+                [
+                    'type' => Table::TYPE_TEXT,
+                    'nullable'  => true,
+                    'length'    => 255,
+                    'after'     => null,
+                    'comment'   => 'Google Analytics User ID for Server Side Analytics'
+                ]
+            );
+        }
+
         $installer->endSetup();
     }
 }
