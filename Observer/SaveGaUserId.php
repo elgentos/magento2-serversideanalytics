@@ -3,53 +3,68 @@
 namespace Elgentos\ServerSideAnalytics\Observer;
 
 use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Stdlib\CookieManagerInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Psr\Log\LoggerInterface;
 
 class SaveGaUserId implements ObserverInterface
 {
     /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     * @var ScopeConfigInterface
      */
     private $scopeConfig;
+
     /**
-     * @var \Psr\Log\LoggerInterface
+     * @var LoggerInterface
      */
     private $logger;
+
     /**
-     * @var \Magento\Framework\Stdlib\CookieManagerInterface
+     * @var CookieManagerInterface
      */
     private $cookieManager;
+
     /**
      * @var GAClient
      */
     private $gaclient;
 
     /**
-     * SaveGaUserId constructor.
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Psr\Log\LoggerInterface $logger
-     * @param \Magento\Framework\Stdlib\CookieManagerInterface $cookieManager
-     * @param GAClient $gaclient
+     * @var CartRepositoryInterface
      */
-    public function __construct(\Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Psr\Log\LoggerInterface $logger,
-                                \Magento\Framework\Stdlib\CookieManagerInterface $cookieManager,
-                                GAClient $gaclient)
-    {
+    protected $quoteRepository;
+
+    /**
+     * SaveGaUserId constructor.
+     * @param ScopeConfigInterface $scopeConfig
+     * @param LoggerInterface $logger
+     * @param CookieManagerInterface $cookieManager
+     * @param GAClient $gaclient
+     * @param CartRepositoryInterface $quoteRepository
+     */
+    public function __construct(
+        ScopeConfigInterface $scopeConfig,
+        LoggerInterface $logger,
+        CookieManagerInterface $cookieManager,
+        GAClient $gaclient,
+        CartRepositoryInterface $quoteRepository
+    ) {
         $this->scopeConfig = $scopeConfig;
         $this->logger = $logger;
         $this->cookieManager = $cookieManager;
         $this->gaclient = $gaclient;
+        $this->quoteRepository = $quoteRepository;
     }
 
     /**
      * When Order object is saved add the GA User Id if available in the cookies.
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param Observer $observer
      */
-
     public function execute(Observer $observer)
     {
         if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)) {
@@ -61,15 +76,15 @@ class SaveGaUserId implements ObserverInterface
             return;
         }
 
-        $gaUserId = $this->getUserIdFromCookie();
+        $order = $observer->getEvent()->getOrder();
+        $quote = $this->quoteRepository->get($order->getQuoteId());
+        $gaUserId = isset($quote->getData('ga_user_id')) ? $quote->getData('ga_user_id') : $this->getUserIdFromCookie();
         if ($gaUserId === null) {
             $gaCookieUserId = random_int(1E8, 1E9);
             $gaCookieTimestamp = time();
             $gaUserId = implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
             $this->logger->info('Google Analytics cookie not found, generated temporary value: ' . $gaUserId);
         }
-
-        $order = $observer->getEvent()->getOrder();
 
         $order->setData('ga_user_id', $gaUserId);
     }
