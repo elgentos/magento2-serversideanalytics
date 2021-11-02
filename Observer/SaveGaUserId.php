@@ -78,7 +78,7 @@ class SaveGaUserId implements ObserverInterface
 
         $order = $observer->getEvent()->getOrder();
         $quote = $this->quoteRepository->get($order->getQuoteId());
-        $gaUserId = isset($quote->getData('ga_user_id')) ? $quote->getData('ga_user_id') : $this->getUserIdFromCookie();
+        $gaUserId = $quote->getData('ga_user_id') ?: $this->getUserIdFromCookie();
         if ($gaUserId === null) {
             $gaCookieUserId = random_int(1E8, 1E9);
             $gaCookieTimestamp = time();
