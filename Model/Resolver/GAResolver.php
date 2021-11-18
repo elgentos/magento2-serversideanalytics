@@ -4,6 +4,7 @@ namespace Elgentos\ServerSideAnalytics\Model\Resolver;
 
 use Exception;
 use Magento\Framework\GraphQl\Config\Element\Field;
+use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
@@ -44,6 +45,10 @@ class GAResolver implements ResolverInterface
         array $value = null,
         array $args = null
     ) {
+        if (is_numeric($args['cartId']) && false === $context->getExtensionAttributes()->getIsCustomer()) {
+            throw new GraphQlAuthorizationException(__('The current customer isn\'t authorized.'));
+        }
+
         $cartId = is_numeric($args['cartId'])
             ? $args['cartId']
             : $this->maskedQuoteIdToQuoteId->execute($args['cartId']);
