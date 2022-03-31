@@ -48,7 +48,7 @@ class GAClient {
         /** @var Analytics analytics */
         $this->analytics = new Analytics(true);
 
-        if ($this->state->getMode() === \Magento\Framework\App\State::MODE_DEVELOPER || $this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE)) {
+        if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE)) {
             // $this->analytics = new Analytics(true, true); // for dev/staging envs where dev mode is off but we don't want to send events
             $this->analytics->setDebug(true);
         }
@@ -157,7 +157,7 @@ class GAClient {
             ->sendEvent();
 
         // @codingStandardsIgnoreStart
-        if ($this->state->getMode() === \Magento\Framework\App\State::MODE_DEVELOPER || $this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE)) {
+        if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE)) {
             $this->logger->info('elgentos_serversideanalytics_debug_response: ', array($response->getDebugResponse()));
         }
         if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING)) {
