@@ -96,7 +96,7 @@ class SaveGaUserId implements ObserverInterface
      */
     protected function getUserIdFromCookie()
     {
-        $gaCookie = explode('.', $this->cookieManager->getCookie('_ga'));
+        $gaCookie = explode('.', $this->cookieManager->getCookie('_ga') ?? '');
 
         if (empty($gaCookie) || count($gaCookie) < 4) {
             return null;
