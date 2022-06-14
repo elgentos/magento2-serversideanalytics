@@ -46,12 +46,6 @@ class SendPurchaseEvent implements ObserverInterface
         if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)) {
             return;
         }
-        $ua = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_UA, ScopeInterface::SCOPE_STORE);
-        if (!$ua) {
-            $this->logger->info('No Google Analytics account number has been found in the ServerSideAnalytics configuration.');
-            return;
-        }
-
 
         /** @var \Magento\Sales\Model\Order\Payment $payment */
         $payment = $observer->getPayment();
@@ -64,30 +58,27 @@ class SendPurchaseEvent implements ObserverInterface
             return;
         }
 
-        $uas = explode(',', $ua);
-        $uas = array_filter($uas);
-        $uas = array_map('trim', $uas);
-
         $products = [];
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
         foreach ($invoice->getAllItems() as $item) {
             if (!$item->isDeleted() && !$item->getOrderItem()->getParentItemId()) {
                 $product = new \Magento\Framework\DataObject([
-                    'sku' => $item->getSku(),
-                    'name' => $item->getName(),
+                    'item_id' => $item->getSku(),
+                    'item_name' => $item->getName(),
+                    'index' => $item->getId(),
                     'price' => $this->getPaidProductPrice($item->getOrderItem()),
                     'quantity' => $item->getOrderItem()->getQtyOrdered(),
-                    'position' => $item->getId()
                 ]);
+
                 $this->event->dispatch('elgentos_serversideanalytics_product_item_transport_object',
                     ['product' => $product, 'item' => $item]);
+
                 $products[] = $product;
             }
         }
 
         $trackingDataObject = new \Magento\Framework\DataObject([
             'client_id' => $order->getData('ga_user_id'),
-            'ip_override' => $order->getRemoteIp(),
             'document_path' => '/checkout/onepage/success/'
         ]);
 
@@ -100,8 +91,9 @@ class SendPurchaseEvent implements ObserverInterface
                     [
                         'transaction_id' => $order->getIncrementId(),
                         'affiliation' => $order->getStoreName(),
+                        'currency' => $invoice->getGlobalCurrencyCode(),
                         'revenue' => $invoice->getBaseGrandTotal(),
-                        'tax' => $invoice->getTaxAmount(),
+                        'tax' => $invoice->getBaseTaxAmount(),
                         'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
                         'coupon_code' => $order->getCouponCode()
                     ]
@@ -114,17 +106,16 @@ class SendPurchaseEvent implements ObserverInterface
             return;
         }
 
+        try {
+            $client->setTrackingData($trackingDataObject);
 
-        foreach ($uas as $ua) {
-            try {
-                $trackingDataObject->setData('tracking_id', $ua);
-                $client->setTrackingData($trackingDataObject);
-                $this->event->dispatch('elgentos_serversideanalytics_tracking_data_transport_object',
-                    ['tracking_data_object' => $trackingDataObject]);
-                $client->firePurchaseEvent();
-            } catch (\Exception $e) {
-                $this->logger->info($e);
-            }
+            $this->event->dispatch(
+                'elgentos_serversideanalytics_tracking_data_transport_object',
+                ['tracking_data_object' => $trackingDataObject]
+            );
+            $client->firePurchaseEvent();
+        } catch (\Exception $e) {
+            $this->logger->info($e);
         }
     }
 
@@ -138,8 +129,8 @@ class SendPurchaseEvent implements ObserverInterface
     private function getPaidProductPrice(\Magento\Sales\Model\Order\Item $orderItem)
     {
         return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_EXCLUDING_TAX
-            ? $orderItem->getPrice()
-            : $orderItem->getPriceInclTax();
+            ? $orderItem->getBasePrice()
+            : $orderItem->getBasePriceInclTax();
     }
 
     /**
@@ -150,8 +141,7 @@ class SendPurchaseEvent implements ObserverInterface
     private function getPaidShippingCosts(\Magento\Sales\Model\Order\Invoice $invoice)
     {
         return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_EXCLUDING_TAX
-            ? $invoice->getShippingAmount()
-            : $invoice->getShippingInclTax();
+            ? $invoice->getBaseShippingAmount()
+            : $invoice->getBaseShippingInclTax();
     }
-
 }

@@ -11,7 +11,7 @@ Another reason why this problem arises is that people decide to pay at a later p
 - This extension only tracks **paid** orders (it fires on *sales_order_payment_pay*). Non-paid orders will never show up in Analytics. This is our current clients' use case, mileage may differ. PR's for code to also track non-paid orders are welcomed.
 
 ## Further info
-- Compatible with GA Measurement Protocol version 1;
+- Compatible with GA Measurement Protocol version 4;
 - Debugging is enabled when Magento is in developer mode. See `var/log/system.log` for the log;
 - Exceptions will be logged to `var/log/exceptions.log`;
 - The products in the payload are retrieve on invoice-basis, not on order-basis;

@@ -71,8 +71,8 @@ class SaveGaUserId implements ObserverInterface
             return;
         }
 
-        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_UA, ScopeInterface::SCOPE_STORE)) {
-            $this->logger->info('No Google Analytics account number has been found in the ServerSideAnalytics configuration.');
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE)) {
+            $this->logger->info('No Google Analytics secret has been found in the ServerSideAnalytics configuration.');
             return;
         }
 
