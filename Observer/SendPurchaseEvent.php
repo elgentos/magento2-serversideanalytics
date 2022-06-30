@@ -14,6 +14,10 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private $scopeConfig;
     /**
+     * @var \Magento\Store\Model\App\Emulation
+     */
+    private $emulation;
+    /**
      * @var \Psr\Log\LoggerInterface
      */
     private $logger;
@@ -28,11 +32,13 @@ class SendPurchaseEvent implements ObserverInterface
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Store\Model\App\Emulation $emulation,
         \Psr\Log\LoggerInterface $logger,
         \Elgentos\ServerSideAnalytics\Model\GAClient $gaclient,
         \Magento\Framework\Event\ManagerInterface $event
     ) {
         $this->scopeConfig = $scopeConfig;
+        $this->emulation = $emulation;
         $this->logger = $logger;
         $this->gaclient = $gaclient;
         $this->event = $event;
@@ -43,18 +49,23 @@ class SendPurchaseEvent implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)) {
-            return;
-        }
-
         /** @var \Magento\Sales\Model\Order\Payment $payment */
         $payment = $observer->getPayment();
-        /** @var \Magento\Sales\Model\Order\Invoice $invoice */
-        $invoice = $observer->getInvoice();
         /** @var \Magento\Sales\Model\Order $order */
         $order = $payment->getOrder();
 
+        $this->emulation->startEnvironmentEmulation($order->getStoreId(), 'adminhtml');
+
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)) {
+            $this->emulation->stopEnvironmentEmulation();
+            return;
+        }
+
+        /** @var \Magento\Sales\Model\Order\Invoice $invoice */
+        $invoice = $observer->getInvoice();
+
         if (!$order->getData('ga_user_id')) {
+            $this->emulation->stopEnvironmentEmulation();
             return;
         }
 
@@ -102,6 +113,7 @@ class SendPurchaseEvent implements ObserverInterface
 
             $client->addProducts($products);
         } catch (\Exception $e) {
+            $this->emulation->stopEnvironmentEmulation();
             $this->logger->info($e);
             return;
         }
@@ -117,6 +129,7 @@ class SendPurchaseEvent implements ObserverInterface
         } catch (\Exception $e) {
             $this->logger->info($e);
         }
+        $this->emulation->stopEnvironmentEmulation();
     }
 
     /**
