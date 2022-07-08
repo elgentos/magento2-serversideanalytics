@@ -2,14 +2,15 @@
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
-use Elgentos\ServerSideAnalytics\Model\GAClient;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\Event\Observer;
-use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Stdlib\CookieManagerInterface;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Quote\Api\CartRepositoryInterface;
 use Psr\Log\LoggerInterface;
+use Magento\Framework\Event\Observer;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\Event\ObserverInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Elgentos\ServerSideAnalytics\Model\UAClient;
+use Magento\Framework\Stdlib\CookieManagerInterface;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class SaveGaUserId implements ObserverInterface
 {
@@ -32,6 +33,10 @@ class SaveGaUserId implements ObserverInterface
      * @var GAClient
      */
     private $gaclient;
+    /**
+     * @var UAClient
+     */
+    private $uaclient;
 
     /**
      * @var CartRepositoryInterface
@@ -44,6 +49,7 @@ class SaveGaUserId implements ObserverInterface
      * @param LoggerInterface $logger
      * @param CookieManagerInterface $cookieManager
      * @param GAClient $gaclient
+     * @param UAClient $uaclient
      * @param CartRepositoryInterface $quoteRepository
      */
     public function __construct(
@@ -51,12 +57,14 @@ class SaveGaUserId implements ObserverInterface
         LoggerInterface $logger,
         CookieManagerInterface $cookieManager,
         GAClient $gaclient,
+        UAClient $uaclient,
         CartRepositoryInterface $quoteRepository
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->logger = $logger;
         $this->cookieManager = $cookieManager;
         $this->gaclient = $gaclient;
+        $this->uaclient = $uaclient;
         $this->quoteRepository = $quoteRepository;
     }
 
@@ -67,12 +75,18 @@ class SaveGaUserId implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)) {
+        if (
+            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE) &&
+            !$this->scopeConfig->getValue(UAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
+        ) {
             return;
         }
 
-        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE)) {
-            $this->logger->info('No Google Analytics secret has been found in the ServerSideAnalytics configuration.');
+        if (
+            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE) &&
+            !$this->scopeConfig->getValue(UAClient::GOOGLE_ANALYTICS_SERVERSIDE_UA, ScopeInterface::SCOPE_STORE)
+        ) {
+            $this->logger->info('No Google Analytics secret or UA has been found in the ServerSideAnalytics configuration.');
             return;
         }
 
@@ -113,7 +127,10 @@ class SaveGaUserId implements ObserverInterface
             return null;
         }
 
-        if ($gaCookieVersion != 'GA' . $this->gaclient->getVersion()) {
+        if (
+            $gaCookieVersion != 'GA' . $this->gaclient->getVersion() &&
+            $gaCookieVersion != 'GA' . $this->uaclient->getVersion()
+        ) {
             $this->logger->info('Google Analytics cookie version differs from Measurement Protocol API version; please upgrade.');
             return null;
         }

@@ -2,10 +2,12 @@
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
-use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
-use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\Event\ObserverInterface;
+use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Elgentos\ServerSideAnalytics\Model\UAClient;
 
 class SendPurchaseEvent implements ObserverInterface
 {
@@ -26,6 +28,10 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private $gaclient;
     /**
+     * @var \Elgentos\ServerSideAnalytics\Model\UAClient
+     */
+    private $uaclient;
+    /**
      * @var \Magento\Framework\Event\ManagerInterface
      */
     private $event;
@@ -35,12 +41,14 @@ class SendPurchaseEvent implements ObserverInterface
         \Magento\Store\Model\App\Emulation $emulation,
         \Psr\Log\LoggerInterface $logger,
         \Elgentos\ServerSideAnalytics\Model\GAClient $gaclient,
+        \Elgentos\ServerSideAnalytics\Model\UAClient $uaclient,
         \Magento\Framework\Event\ManagerInterface $event
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->emulation = $emulation;
         $this->logger = $logger;
         $this->gaclient = $gaclient;
+        $this->uaclient = $uaclient;
         $this->event = $event;
     }
 
@@ -56,7 +64,10 @@ class SendPurchaseEvent implements ObserverInterface
 
         $this->emulation->startEnvironmentEmulation($order->getStoreId(), 'adminhtml');
 
-        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)) {
+        if (
+            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE) &&
+            !$this->scopeConfig->getValue(UAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
+        ) {
             $this->emulation->stopEnvironmentEmulation();
             return;
         }
@@ -70,15 +81,16 @@ class SendPurchaseEvent implements ObserverInterface
         }
 
         $products = [];
+
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
         foreach ($invoice->getAllItems() as $item) {
             if (!$item->isDeleted() && !$item->getOrderItem()->getParentItemId()) {
                 $product = new \Magento\Framework\DataObject([
-                    'item_id' => $item->getSku(),
-                    'item_name' => $item->getName(),
-                    'index' => $item->getId(),
+                    'sku' => $item->getSku(),
+                    'name' => $item->getName(),
                     'price' => $this->getPaidProductPrice($item->getOrderItem()),
                     'quantity' => $item->getOrderItem()->getQtyOrdered(),
+                    'position' => $item->getId(),
                 ]);
 
                 $this->event->dispatch('elgentos_serversideanalytics_product_item_transport_object',
@@ -88,32 +100,52 @@ class SendPurchaseEvent implements ObserverInterface
             }
         }
 
-        $trackingDataObject = new \Magento\Framework\DataObject([
+        $trackingDataObject = new DataObject([
             'client_id' => $order->getData('ga_user_id'),
+            'ip_override' => $order->getRemoteIp(),
             'document_path' => '/checkout/onepage/success/'
         ]);
 
+        $transactionDataObject = new DataObject(
+            [
+                'transaction_id' => $order->getIncrementId(),
+                'affiliation' => $order->getStoreName(),
+                'currency' => $invoice->getGlobalCurrencyCode(),
+                'revenue' => $invoice->getBaseGrandTotal(),
+                'tax' => $invoice->getBaseTaxAmount(),
+                'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
+                'coupon_code' => $order->getCouponCode()
+            ]
+        );
+
+        if ($this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE))
+        {
+            $this->sendPurchaseEvent($this->gaclient, $transactionDataObject, $products, $trackingDataObject);
+        }
+
+        if ($this->scopeConfig->getValue(UAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE))
+        {
+            $ua = $this->scopeConfig->getValue(UAClient::GOOGLE_ANALYTICS_SERVERSIDE_UA, ScopeInterface::SCOPE_STORE);
+            $uas = explode(',', $ua ?? '');
+            $uas = array_filter($uas);
+            $uas = array_map('trim', $uas);
+
+            foreach ($uas as $ua) {
+                $trackingDataObject->setData('tracking_id', $ua);
+                $this->sendPurchaseEvent($this->uaclient, $transactionDataObject, $products, $trackingDataObject);
+            }
+        }
+
+        $this->emulation->stopEnvironmentEmulation();
+    }
+
+    public function sendPurchaseEvent($client, DataObject $transactionDataObject, array $products, DataObject $trackingDataObject)
+    {
         try {
-            /** @var \Elgentos\ServerSideAnalytics\Model\GAClient $client */
-            $client = $this->gaclient;
-            
-            $client->setTransactionData(
-                new \Magento\Framework\DataObject(
-                    [
-                        'transaction_id' => $order->getIncrementId(),
-                        'affiliation' => $order->getStoreName(),
-                        'currency' => $invoice->getGlobalCurrencyCode(),
-                        'revenue' => $invoice->getBaseGrandTotal(),
-                        'tax' => $invoice->getBaseTaxAmount(),
-                        'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
-                        'coupon_code' => $order->getCouponCode()
-                    ]
-                )
-            );
+            $client->setTransactionData($transactionDataObject);
 
             $client->addProducts($products);
         } catch (\Exception $e) {
-            $this->emulation->stopEnvironmentEmulation();
             $this->logger->info($e);
             return;
         }
@@ -129,7 +161,6 @@ class SendPurchaseEvent implements ObserverInterface
         } catch (\Exception $e) {
             $this->logger->info($e);
         }
-        $this->emulation->stopEnvironmentEmulation();
     }
 
     /**

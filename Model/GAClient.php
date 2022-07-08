@@ -11,7 +11,7 @@ use Magento\Store\Model\ScopeInterface;
 
 class GAClient {
 
-    const GOOGLE_ANALYTICS_SERVERSIDE_ENABLED        = 'google/serverside_analytics/enabled';
+    const GOOGLE_ANALYTICS_SERVERSIDE_ENABLED        = 'google/serverside_analytics/ga_enabled';
     const GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET     = 'google/serverside_analytics/api_secret';
     const GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID = 'google/serverside_analytics/measurement_id';
     const GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE     = 'google/serverside_analytics/debug_mode';
@@ -118,9 +118,7 @@ class GAClient {
             throw new \Exception('No client ID is set for GA client.');
         }
 
-        if ($data->getClientId()) {
-            $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'
-        }
+        $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'
     }
 
     /**
@@ -160,7 +158,15 @@ class GAClient {
     public function addProduct($data)
     {
         $this->productCounter++;
-        $this->getPurchaseEvent()->addItem(new ItemParameter($data->getData()));
+
+        $itemParameter = new ItemParameter($data->getData());
+        $itemParameter->setItemId($data->getSku())
+            ->setItemName($data->getName())
+            ->setIndex($data->getPosition())
+            ->setPrice($data->getPrice())
+            ->setQuantity($data->getQuantity());
+
+        $this->getPurchaseEvent()->addItem($itemParameter);
     }
 
     /**
