@@ -4,8 +4,8 @@ namespace Elgentos\ServerSideAnalytics\Observer;
 
 use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
-use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\Event\ObserverInterface;
 use Elgentos\ServerSideAnalytics\Model\GAClient;
 use Elgentos\ServerSideAnalytics\Model\UAClient;
 
@@ -28,6 +28,10 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private $gaclient;
     /**
+     * @var \Elgentos\ServerSideAnalytics\Model\UAClient
+     */
+    private $uaclient;
+    /**
      * @var \Magento\Framework\Event\ManagerInterface
      */
     private $event;
@@ -37,12 +41,14 @@ class SendPurchaseEvent implements ObserverInterface
         \Magento\Store\Model\App\Emulation $emulation,
         \Psr\Log\LoggerInterface $logger,
         \Elgentos\ServerSideAnalytics\Model\GAClient $gaclient,
+        \Elgentos\ServerSideAnalytics\Model\UAClient $uaclient,
         \Magento\Framework\Event\ManagerInterface $event
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->emulation = $emulation;
         $this->logger = $logger;
         $this->gaclient = $gaclient;
+        $this->uaclient = $uaclient;
         $this->event = $event;
     }
 
@@ -75,6 +81,7 @@ class SendPurchaseEvent implements ObserverInterface
         }
 
         $products = [];
+
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
         foreach ($invoice->getAllItems() as $item) {
             if (!$item->isDeleted() && !$item->getOrderItem()->getParentItemId()) {
@@ -200,8 +207,7 @@ class SendPurchaseEvent implements ObserverInterface
     private function getPaidShippingCosts(\Magento\Sales\Model\Order\Invoice $invoice)
     {
         return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_EXCLUDING_TAX
-            ? $invoice->getShippingAmount()
-            : $invoice->getShippingInclTax();
+            ? $invoice->getBaseShippingAmount()
+            : $invoice->getBaseShippingInclTax();
     }
-
 }

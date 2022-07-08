@@ -5,13 +5,33 @@
             <group id="serverside_analytics" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>ServerSide Google Analytics Options</label>
                 <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Enable</label>
+                    <label>Univeral Analytics Enable</label>
                     <comment><![CDATA[WARNING: even when you have this extension disabled, the regular frontend success event will be disabled. Completely remove this extension to re-enable the normal event on the success page.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="ga_enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Google Analytics 4 Enable</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="ua" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Google Analytics UA tag</label>
                     <comment><![CDATA[For example, UA-12384573. Multiple container ID's can be used, separate by comma]]></comment>
+                    <depends>
+                        <field id="google/serverside_analytics/enabled">1</field>
+                    </depends>
+                </field>
+                <field id="api_secret" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>API Secret</label>
+                    <depends>
+                        <field id="google/serverside_analytics/ga_enabled">1</field>
+                    </depends>
+                </field>
+                <field id="measurement_id" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Google Analytics Measurement Id</label>
+                    <comment><![CDATA[For example, G-12384573]]></comment>
+                    <depends>
+                        <field id="google/serverside_analytics/ga_enabled">1</field>
+                    </depends>
                 </field>
                 <field id="debug_mode" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Enable Debug Mode</label>
