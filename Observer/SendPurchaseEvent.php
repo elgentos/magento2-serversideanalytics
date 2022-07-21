@@ -94,26 +94,28 @@ class SendPurchaseEvent implements ObserverInterface
         try {
             /** @var \Elgentos\ServerSideAnalytics\Model\GAClient $client */
             $client = $this->gaclient;
-            
-            $client->setTransactionData(
-                new \Magento\Framework\DataObject(
-                    [
-                        'transaction_id' => $order->getIncrementId(),
-                        'affiliation' => $order->getStoreName(),
-                        'revenue' => $invoice->getBaseGrandTotal(),
-                        'tax' => $invoice->getTaxAmount(),
-                        'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
-                        'coupon_code' => $order->getCouponCode()
-                    ]
-                )
+
+            $transactionDataObject = new \Magento\Framework\DataObject(
+                [
+                    'transaction_id' => $order->getIncrementId(),
+                    'affiliation' => $order->getStoreName(),
+                    'revenue' => $invoice->getBaseGrandTotal(),
+                    'tax' => $invoice->getTaxAmount(),
+                    'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
+                    'coupon_code' => $order->getCouponCode()
+                ]
             );
+
+            $this->event->dispatch('elgentos_serversideanalytics_transaction_data_transport_object',
+                ['transaction_data_object' => $transactionDataObject]);
+
+            $client->setTransactionData($transactionDataObject);
 
             $client->addProducts($products);
         } catch (\Exception $e) {
             $this->logger->info($e);
             return;
         }
-
 
         foreach ($uas as $ua) {
             try {
