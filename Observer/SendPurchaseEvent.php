@@ -3,6 +3,7 @@
 namespace Elgentos\ServerSideAnalytics\Observer;
 
 use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -72,7 +73,7 @@ class SendPurchaseEvent implements ObserverInterface
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
         foreach ($invoice->getAllItems() as $item) {
             if (!$item->isDeleted() && !$item->getOrderItem()->getParentItemId()) {
-                $product = new \Magento\Framework\DataObject([
+                $product = new DataObject([
                     'sku' => $item->getSku(),
                     'name' => $item->getName(),
                     'price' => $this->getPaidProductPrice($item->getOrderItem()),
@@ -85,7 +86,7 @@ class SendPurchaseEvent implements ObserverInterface
             }
         }
 
-        $trackingDataObject = new \Magento\Framework\DataObject([
+        $trackingDataObject = new DataObject([
             'client_id' => $order->getData('ga_user_id'),
             'ip_override' => $order->getRemoteIp(),
             'document_path' => '/checkout/onepage/success/'
@@ -94,26 +95,14 @@ class SendPurchaseEvent implements ObserverInterface
         try {
             /** @var \Elgentos\ServerSideAnalytics\Model\GAClient $client */
             $client = $this->gaclient;
-            
-            $client->setTransactionData(
-                new \Magento\Framework\DataObject(
-                    [
-                        'transaction_id' => $order->getIncrementId(),
-                        'affiliation' => $order->getStoreName(),
-                        'revenue' => $invoice->getBaseGrandTotal(),
-                        'tax' => $invoice->getTaxAmount(),
-                        'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
-                        'coupon_code' => $order->getCouponCode()
-                    ]
-                )
-            );
+
+            $client->setTransactionData($this->getTransactionDataObject($order, $invoice));
 
             $client->addProducts($products);
         } catch (\Exception $e) {
             $this->logger->info($e);
             return;
         }
-
 
         foreach ($uas as $ua) {
             try {
@@ -126,6 +115,31 @@ class SendPurchaseEvent implements ObserverInterface
                 $this->logger->info($e);
             }
         }
+    }
+
+    /**
+     * @param $order
+     * @param $invoice
+     *
+     * @return DataObject
+     */
+    public function getTransactionDataObject($order, $invoice): DataObject
+    {
+        $transactionDataObject = new DataObject(
+            [
+                'transaction_id' => $order->getIncrementId(),
+                'affiliation' => $order->getStoreName(),
+                'revenue' => $invoice->getBaseGrandTotal(),
+                'tax' => $invoice->getTaxAmount(),
+                'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
+                'coupon_code' => $order->getCouponCode()
+            ]
+        );
+
+        $this->event->dispatch('elgentos_serversideanalytics_transaction_data_transport_object',
+            ['transaction_data_object' => $transactionDataObject]);
+
+        return $transactionDataObject;
     }
 
     /**
