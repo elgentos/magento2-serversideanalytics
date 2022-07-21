@@ -16,5 +16,6 @@ Another reason why this problem arises is that people decide to pay at a later p
 - Exceptions will be logged to `var/log/exceptions.log`;
 - The products in the payload are retrieve on invoice-basis, not on order-basis;
 - An event has been added for you to add or overwrite custom fields to products in the purchase event; `elgentos_serversideanalytics_product_item_transport_object`;
+- An event has been added for you to add or overwrite custom fields to transaction data in the purchase event; `elgentos_serversideanalytics_transaction_data_transport_object`;
 - An event has been added for you to add or overwrite fields to tracking data in the purchase event; `elgentos_serversideanalytics_tracking_data_transport_object`;
 - Testing can be done by dispatching `test_event_for_serversideanalytics` with a `$payment` (`\Magento\Sales\Order\Payment`) object in the payload;
