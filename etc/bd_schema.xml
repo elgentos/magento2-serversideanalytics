@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Elgentos. All rights reserved.
+ * https://elgentos.nl
+ */
+-->
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="sales_order">
+        <column name="ga_user_id" xsi:type="varchar" comment="Google Analytics User ID for Server Side Analytics" nullable="true" length="255"/>
+    </table>
+</schema>
