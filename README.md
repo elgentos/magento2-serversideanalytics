@@ -6,6 +6,13 @@ That problem arises due to the fact that a certain number of people close the br
 
 Another reason why this problem arises is that people decide to pay at a later point in time through a different platform (like the PSP's), using a link in an email for example.
 
+## Installations
+
+```bash
+composer require elgentos/serversideanalytics2
+bin/magento setup:upgrade
+```
+
 ## Caveats
 - This extension disables the GA JS Purchase Event on the success page altogether. It will however track the pageview.
 - This extension only tracks **paid** orders (it fires on *sales_order_payment_pay*). Non-paid orders will never show up in Analytics. This is our current clients' use case, mileage may differ. PR's for code to also track non-paid orders are welcomed.
