@@ -12,16 +12,25 @@
                 <field id="ua" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Google Analytics UA tag</label>
                     <comment><![CDATA[For example, UA-12384573. Multiple container ID's can be used, separate by comma]]></comment>
+                    <depends>
+                        <field id="google/serverside_analytics/enabled">1</field>
+                    </depends>
                 </field>
                 <field id="debug_mode" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Enable Debug Mode</label>
                     <comment><![CDATA[<strong>Warning:</strong> When this is enabled, transactions will not be pushed to Google Analytics, only debugged]]></comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="google/serverside_analytics/enabled">1</field>
+                    </depends>
                 </field>
                 <field id="enable_logging" translate="label" type="select" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Enable Logging</label>
                     <comment><![CDATA[When enabled, this will log the requests done to Google Analytics]]></comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="google/serverside_analytics/enabled">1</field>
+                    </depends>
                 </field>
             </group>
         </section>
