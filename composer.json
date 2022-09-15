@@ -1,6 +1,21 @@
 {
   "name": "elgentos/serversideanalytics2",
-  "description": "Elgentos_ServerSideAnalytics for magento 2",
+  "description": "ServerSide Analytics extension for Magento 2 by elgentos",
+  "homepage": "https://github.com/elgentos/magento2-serversideanalytics/",
+  "keywords": [
+    "Magento 2",
+    "Magento 2 Extension",
+    "Adobe Commerce",
+    "Adobe Commerce Extension",
+    "Serverside Analytics",
+    "Google Analytics"
+  ],
+  "readme": "README.md",
+  "license": "MIT",
+  "support": {
+    "issues": "https://github.com/elgentos/magento2-serversideanalytics/issues",
+    "docs": "https://github.com/elgentos/magento2-serversideanalytics/blob/master/README.md"
+  },
   "require": {
     "php": ">=7.1.0",
     "8ctopus/php-ga-measurement-protocol": "^2.0"
@@ -8,7 +23,7 @@
   "type": "magento2-module",
   "authors": [
     {
-      "name": "peterjaap",
+      "name": "Peter Jaap Blaakmeer",
       "email": "peterjaap@elgentos.nl"
     }
   ],
