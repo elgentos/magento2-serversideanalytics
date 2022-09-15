@@ -3,10 +3,13 @@
     <system>
         <section id="google" translate="label" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1">
             <group id="serverside_analytics" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+                <comment>
+                    <![CDATA[This section is provided by the <a href="https://github.com/elgentos/magento2-serversideanalytics" target="_blank">Serverside Analytics</a> extension. <b>The following fields are not Magento 2 Standard</b>. Please follow the <a href="https://github.com/elgentos/magento2-serversideanalytics/blob/master/README.md" target="_blank">Instructions</a>.]]>
+                </comment>
                 <label>ServerSide Google Analytics Options</label>
                 <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Enable</label>
-                    <comment><![CDATA[WARNING: even when you have this extension disabled, the regular frontend success event will be disabled. Completely remove this extension to re-enable the normal event on the success page.]]></comment>
+                    <comment><![CDATA[<b>Warning</b>: Even when you have this extension disabled, the regular frontend success event will be disabled. Completely remove this extension to re-enable the normal event on the success page.]]></comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="ua" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
