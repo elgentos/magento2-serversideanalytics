@@ -2,11 +2,12 @@
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
-use Elgentos\ServerSideAnalytics\Model\GAClient;
 use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
-use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\Event\ObserverInterface;
+use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Elgentos\ServerSideAnalytics\Model\UAClient;
 
 class SendPurchaseEvent implements ObserverInterface
 {
@@ -14,6 +15,10 @@ class SendPurchaseEvent implements ObserverInterface
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
     private $scopeConfig;
+    /**
+     * @var \Magento\Store\Model\App\Emulation
+     */
+    private $emulation;
     /**
      * @var \Psr\Log\LoggerInterface
      */
@@ -23,19 +28,27 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private $gaclient;
     /**
+     * @var \Elgentos\ServerSideAnalytics\Model\UAClient
+     */
+    private $uaclient;
+    /**
      * @var \Magento\Framework\Event\ManagerInterface
      */
     private $event;
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Store\Model\App\Emulation $emulation,
         \Psr\Log\LoggerInterface $logger,
         \Elgentos\ServerSideAnalytics\Model\GAClient $gaclient,
+        \Elgentos\ServerSideAnalytics\Model\UAClient $uaclient,
         \Magento\Framework\Event\ManagerInterface $event
     ) {
         $this->scopeConfig = $scopeConfig;
+        $this->emulation = $emulation;
         $this->logger = $logger;
         $this->gaclient = $gaclient;
+        $this->uaclient = $uaclient;
         $this->event = $event;
     }
 
@@ -44,32 +57,31 @@ class SendPurchaseEvent implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)) {
-            return;
-        }
-        $ua = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_UA, ScopeInterface::SCOPE_STORE);
-        if (!$ua) {
-            $this->logger->info('No Google Analytics account number has been found in the ServerSideAnalytics configuration.');
-            return;
-        }
-
-
         /** @var \Magento\Sales\Model\Order\Payment $payment */
         $payment = $observer->getPayment();
-        /** @var \Magento\Sales\Model\Order\Invoice $invoice */
-        $invoice = $observer->getInvoice();
         /** @var \Magento\Sales\Model\Order $order */
         $order = $payment->getOrder();
 
-        if (!$order->getData('ga_user_id')) {
+        $this->emulation->startEnvironmentEmulation($order->getStoreId(), 'adminhtml');
+
+        if (
+            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE) &&
+            !$this->scopeConfig->getValue(UAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
+        ) {
+            $this->emulation->stopEnvironmentEmulation();
             return;
         }
 
-        $uas = explode(',', $ua);
-        $uas = array_filter($uas);
-        $uas = array_map('trim', $uas);
+        /** @var \Magento\Sales\Model\Order\Invoice $invoice */
+        $invoice = $observer->getInvoice();
+
+        if (!$order->getData('ga_user_id')) {
+            $this->emulation->stopEnvironmentEmulation();
+            return;
+        }
 
         $products = [];
+
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
         foreach ($invoice->getAllItems() as $item) {
             if (!$item->isDeleted() && !$item->getOrderItem()->getParentItemId()) {
@@ -80,8 +92,10 @@ class SendPurchaseEvent implements ObserverInterface
                     'quantity' => $item->getOrderItem()->getQtyOrdered(),
                     'position' => $item->getId()
                 ]);
+
                 $this->event->dispatch('elgentos_serversideanalytics_product_item_transport_object',
                     ['product' => $product, 'item' => $item]);
+
                 $products[] = $product;
             }
         }
@@ -92,29 +106,27 @@ class SendPurchaseEvent implements ObserverInterface
             'document_path' => '/checkout/onepage/success/'
         ]);
 
-        try {
-            /** @var \Elgentos\ServerSideAnalytics\Model\GAClient $client */
-            $client = $this->gaclient;
+        $transactionDataObject = $this->getTransactionDataObject($order, $invoice);
 
-            $client->setTransactionData($this->getTransactionDataObject($order, $invoice));
-
-            $client->addProducts($products);
-        } catch (\Exception $e) {
-            $this->logger->info($e);
-            return;
+        if ($this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE))
+        {
+            $this->sendPurchaseEvent($this->gaclient, $transactionDataObject, $products, $trackingDataObject);
         }
 
-        foreach ($uas as $ua) {
-            try {
+        if ($this->scopeConfig->getValue(UAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE))
+        {
+            $ua = $this->scopeConfig->getValue(UAClient::GOOGLE_ANALYTICS_SERVERSIDE_UA, ScopeInterface::SCOPE_STORE);
+            $uas = explode(',', $ua ?? '');
+            $uas = array_filter($uas);
+            $uas = array_map('trim', $uas);
+
+            foreach ($uas as $ua) {
                 $trackingDataObject->setData('tracking_id', $ua);
-                $client->setTrackingData($trackingDataObject);
-                $this->event->dispatch('elgentos_serversideanalytics_tracking_data_transport_object',
-                    ['tracking_data_object' => $trackingDataObject]);
-                $client->firePurchaseEvent();
-            } catch (\Exception $e) {
-                $this->logger->info($e);
+                $this->sendPurchaseEvent($this->uaclient, $transactionDataObject, $products, $trackingDataObject);
             }
         }
+        
+        $this->emulation->stopEnvironmentEmulation();
     }
 
     /**
@@ -129,8 +141,9 @@ class SendPurchaseEvent implements ObserverInterface
             [
                 'transaction_id' => $order->getIncrementId(),
                 'affiliation' => $order->getStoreName(),
+                'currency' => $invoice->getGlobalCurrencyCode(),
                 'revenue' => $invoice->getBaseGrandTotal(),
-                'tax' => $invoice->getTaxAmount(),
+                'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
                 'coupon_code' => $order->getCouponCode()
             ]
@@ -143,6 +156,36 @@ class SendPurchaseEvent implements ObserverInterface
     }
 
     /**
+     * @param $client
+     * @param DataObject $transactionDataObject
+     * @param array $products
+     * @param DataObject $trackingDataObject
+     */
+    public function sendPurchaseEvent($client, DataObject $transactionDataObject, array $products, DataObject $trackingDataObject)
+    {
+        try {
+            $client->setTransactionData($transactionDataObject);
+
+            $client->addProducts($products);
+        } catch (\Exception $e) {
+            $this->logger->info($e);
+            return;
+        }
+
+        try {
+            $client->setTrackingData($trackingDataObject);
+
+            $this->event->dispatch(
+                'elgentos_serversideanalytics_tracking_data_transport_object',
+                ['tracking_data_object' => $trackingDataObject]
+            );
+            $client->firePurchaseEvent();
+        } catch (\Exception $e) {
+            $this->logger->info($e);
+        }
+    }
+
+    /**
      * Get the actual price the customer also saw in it's cart.
      *
      * @param \Magento\Sales\Model\Order\Item $orderItem
@@ -152,8 +195,8 @@ class SendPurchaseEvent implements ObserverInterface
     private function getPaidProductPrice(\Magento\Sales\Model\Order\Item $orderItem)
     {
         return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_EXCLUDING_TAX
-            ? $orderItem->getPrice()
-            : $orderItem->getPriceInclTax();
+            ? $orderItem->getBasePrice()
+            : $orderItem->getBasePriceInclTax();
     }
 
     /**
@@ -164,8 +207,7 @@ class SendPurchaseEvent implements ObserverInterface
     private function getPaidShippingCosts(\Magento\Sales\Model\Order\Invoice $invoice)
     {
         return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_EXCLUDING_TAX
-            ? $invoice->getShippingAmount()
-            : $invoice->getShippingInclTax();
+            ? $invoice->getBaseShippingAmount()
+            : $invoice->getBaseShippingInclTax();
     }
-
 }
