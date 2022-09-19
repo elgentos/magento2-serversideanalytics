@@ -5,10 +5,10 @@ use TheIconic\Tracking\GoogleAnalytics\Analytics;
 
 class GAClient {
 
-    const GOOGLE_ANALYTICS_SERVERSIDE_ENABLED        = 'google/serverside_analytics/enabled';
-    const GOOGLE_ANALYTICS_SERVERSIDE_UA             = 'google/serverside_analytics/ua';
-    const GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE     = 'google/serverside_analytics/debug_mode';
-    const GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING = 'google/serverside_analytics/enable_logging';
+    public const GOOGLE_ANALYTICS_SERVERSIDE_ENABLED        = 'google/serverside_analytics/enabled';
+    public const GOOGLE_ANALYTICS_SERVERSIDE_UA             = 'google/serverside_analytics/ua';
+    public const GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE     = 'google/serverside_analytics/debug_mode';
+    public const GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING = 'google/serverside_analytics/enable_logging';
 
 
     /* Analytics object which holds transaction data */

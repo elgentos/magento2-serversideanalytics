@@ -3,16 +3,35 @@
     <event name="sales_order_place_before">
         <observer name="elgentos_serversideanalytics_sales_order_place_before_observer" instance="Elgentos\ServerSideAnalytics\Observer\SaveGaUserId"/>
     </event>
+    
     <event name="sales_order_payment_pay">
         <observer name="elgentos_serversideanalytics_sales_order_payment_pay_observer" instance="Elgentos\ServerSideAnalytics\Observer\SendPurchaseEvent"/>
     </event>
+    
     <event name="test_event_for_serversideanalytics">
         <observer name="elgentos_serversideanalytics_observer" instance="Elgentos\ServerSideAnalytics\Observer\SendPurchaseEvent"/>
     </event>
+    
     <event name="checkout_onepage_controller_success_action">
         <observer name="googleanalytics_order_success" disabled="true" />
     </event>
+    
     <event name="multishipping_checkout_controller_success_action">
         <observer name="googleanalytics_order_success" disabled="true"/>
+    </event>
+
+    <!--
+    |__________________________________________________________________________
+    |  Add to Cart Event
+    |__________________________________________________________________________
+    | The observer declared below is responsible for trigger a service
+    | that sends an event to Google Analytics to tell that a product
+    | was added to the cart. GA Reference can be looked up here:
+    |
+    | @see https://developers.google.com/analytics/devguides/collection/ga4/reference/events#add_to_cart
+    |
+    -->
+    <event name="checkout_cart_add_product_complete">
+        <observer name="elgentos_serversideanalytics_add_to_cart" instance="Elgentos\ServerSideAnalytics\Observer\AddToCartEvent"/>
     </event>
 </config>

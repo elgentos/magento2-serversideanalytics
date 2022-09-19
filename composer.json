@@ -17,7 +17,7 @@
     "docs": "https://github.com/elgentos/magento2-serversideanalytics/blob/master/README.md"
   },
   "require": {
-    "php": ">=7.1.0",
+    "php": ">=7.4.0",
     "8ctopus/php-ga-measurement-protocol": "^2.0"
   },
   "type": "magento2-module",
@@ -27,7 +27,6 @@
       "email": "peterjaap@elgentos.nl"
     }
   ],
-
   "autoload": {
     "files": [
       "registration.php"

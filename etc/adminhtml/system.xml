@@ -3,15 +3,17 @@
     <system>
         <section id="google" translate="label" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1">
             <group id="serverside_analytics" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>ServerSide Google Analytics Options</label>
                 <comment>
                     <![CDATA[This section is provided by the <a href="https://github.com/elgentos/magento2-serversideanalytics" target="_blank">Serverside Analytics</a> extension. <b>The following fields are not Magento 2 Standard</b>. Please follow the <a href="https://github.com/elgentos/magento2-serversideanalytics/blob/master/README.md" target="_blank">Instructions</a>.]]>
                 </comment>
-                <label>ServerSide Google Analytics Options</label>
+
                 <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Enable</label>
                     <comment><![CDATA[<b>Warning</b>: Even when you have this extension disabled, the regular frontend success event will be disabled. Completely remove this extension to re-enable the normal event on the success page.]]></comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+
                 <field id="ua" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Google Analytics UA tag</label>
                     <comment><![CDATA[For example, UA-12384573. Multiple container ID's can be used, separate by comma]]></comment>
@@ -19,6 +21,7 @@
                         <field id="google/serverside_analytics/enabled">1</field>
                     </depends>
                 </field>
+
                 <field id="debug_mode" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Enable Debug Mode</label>
                     <comment><![CDATA[<strong>Warning:</strong> When this is enabled, transactions will not be pushed to Google Analytics, only debugged]]></comment>
@@ -27,6 +30,7 @@
                         <field id="google/serverside_analytics/enabled">1</field>
                     </depends>
                 </field>
+
                 <field id="enable_logging" translate="label" type="select" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Enable Logging</label>
                     <comment><![CDATA[When enabled, this will log the requests done to Google Analytics]]></comment>
