@@ -18,6 +18,7 @@
   },
   "require": {
     "php": ">=7.4.0",
+    "br33f/php-ga4-mp": "^0.1.0",
     "8ctopus/php-ga-measurement-protocol": "^2.0"
   },
   "type": "magento2-module",

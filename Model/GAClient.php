@@ -1,118 +1,144 @@
 <?php
+declare(strict_types=1);
+
 namespace Elgentos\ServerSideAnalytics\Model;
 
-use TheIconic\Tracking\GoogleAnalytics\Analytics;
+use Br33f\Ga4\MeasurementProtocol\Dto\Event\PurchaseEvent;
+use Br33f\Ga4\MeasurementProtocol\Dto\Parameter\ItemParameter;
+use Br33f\Ga4\MeasurementProtocol\Dto\Request\BaseRequest;
+use Br33f\Ga4\MeasurementProtocol\Service;
+use Br33f\Ga4\MeasurementProtocol\Dto\Response\BaseResponse;
+use Br33f\Ga4\MeasurementProtocol\Dto\Response\DebugResponse;
+use Magento\Store\Model\ScopeInterface;
 
-class GAClient {
-
-    public const GOOGLE_ANALYTICS_SERVERSIDE_ENABLED        = 'google/serverside_analytics/enabled';
-    public const GOOGLE_ANALYTICS_SERVERSIDE_UA             = 'google/serverside_analytics/ua';
-    public const GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE     = 'google/serverside_analytics/debug_mode';
+class GAClient
+{
+    public const GOOGLE_ANALYTICS_SERVERSIDE_ENABLED = 'google/serverside_analytics/ga_enabled';
+    public const GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET = 'google/serverside_analytics/api_secret';
+    public const GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID = 'google/serverside_analytics/measurement_id';
+    public const GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE = 'google/serverside_analytics/debug_mode';
     public const GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING = 'google/serverside_analytics/enable_logging';
 
+    protected Service $service;
 
-    /* Analytics object which holds transaction data */
-    protected $analytics;
+    /**
+     * @var BaseRequest
+     */
+    protected BaseRequest $request;
+
+    /**
+     * @var PurchaseEvent
+     */
+    protected PurchaseEvent $purchaseEvent;
 
     /* Google Analytics Measurement Protocol API version */
-    protected $version = '1';
+    protected string $version = '4';
 
     /* Count how many products are added to the Analytics object */
-    protected $productCounter = 0;
+    protected int $productCounter = 0;
     /**
      * @var \Magento\Framework\App\State
      */
-    private $state;
+    private \Magento\Framework\App\State $state;
     /**
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
-    private $scopeConfig;
+    private \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig;
     /**
      * @var \Psr\Log\LoggerInterface
      */
-    private $logger;
+    private \Psr\Log\LoggerInterface $logger;
 
     /**
      * Elgentos_ServerSideAnalytics_Model_GAClient constructor.
-     * @param \Magento\Framework\App\State $state
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param  \Magento\Framework\App\State  $state
+     * @param  \Magento\Framework\App\Config\ScopeConfigInterface  $scopeConfig
      */
-    public function __construct(\Magento\Framework\App\State $state,
-                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Psr\Log\LoggerInterface $logger
-    )
-    {
+    public function __construct(
+        \Magento\Framework\App\State $state,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Psr\Log\LoggerInterface $logger
+    ) {
         $this->state = $state;
         $this->scopeConfig = $scopeConfig;
-
-        /** @var Analytics analytics */
-        $this->analytics = new Analytics(true);
-
-        if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE)) {
-            // $this->analytics = new Analytics(true, true); // for dev/staging envs where dev mode is off but we don't want to send events
-            $this->analytics->setDebug(true);
-        }
         $this->logger = $logger;
     }
 
+    public function getService()
+    {
+        if ($this->service) {
+            return $this->service;
+        }
+
+        $this->service = new Service($this->getApiSecret(), $this->getMeasurementId());
+
+        return $this->service;
+    }
+
+    public function getRequest()
+    {
+        if ($this->request) {
+            return $this->request;
+        }
+
+        $this->request = new BaseRequest();
+
+        return $this->request;
+    }
+
+    public function getPurchaseEvent()
+    {
+        if ($this->purchaseEvent) {
+            return $this->purchaseEvent;
+        }
+
+        $this->purchaseEvent = new PurchaseEvent();
+
+        return $this->purchaseEvent;
+    }
+
+    public function getApiSecret()
+    {
+        return $this->scopeConfig->getValue(self::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE);
+    }
+
+    public function getMeasurementId()
+    {
+        return $this->scopeConfig->getValue(self::GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID,
+            ScopeInterface::SCOPE_STORE);
+    }
+
     /**
-     * @param \Magento\Framework\DataObject $data
+     * @param  \Magento\Framework\DataObject  $data
      * @throws \Exception
      */
     public function setTrackingData(\Magento\Framework\DataObject $data)
     {
-        if (!$data->getTrackingId()) {
-            throw new \Exception('No tracking ID set for GA client.');
+        if (!$data->getClientId()) {
+            throw new \Exception('No client ID is set for GA client.');
         }
 
-        if (!$data->getClientId() && !$data->getUserId()) {
-            throw new \Exception('No client ID or user ID is set for GA client; at least one is necessary.');
-        }
-
-        $this->analytics->setProtocolVersion($this->version)
-            ->setTrackingId($data->getTrackingId()) // 'UA-26293624-12'
-            ->setIpOverride($data->getIpOverride()); // '123'
-
-        if ($data->getClientId()) {
-            $this->analytics->setClientId($data->getClientId()); // '2133506694.1448249699'
-        }
-
-        if ($data->getUserId()) {
-            $this->analytics->setUserId($data->getUserId());
-        }
-
-        if ($data->getUserAgentOverride()) {
-            $this->analytics->setUserAgentOverride($data->getUserAgentOverride());
-        }
-
-        if ($data->getDocumentPath()) {
-            $this->analytics->setDocumentPath($data->getDocumentPath());
-        }
+        $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'
     }
 
-    /**
-     * @param $data
-     */
     public function setTransactionData($data)
     {
-        $this->analytics
+        $this->getPurchaseEvent()
             ->setTransactionId($data->getTransactionId())
-            ->setRevenue($data->getRevenue())
+            ->setCurrency($data->getCurrency())
+            ->setValue($data->getRevenue())
             ->setTax($data->getTax())
             ->setShipping($data->getShipping());
 
         if ($data->getAffiliation()) {
-            $this->analytics->setAffiliation($data->getAffiliation());
+            $this->getPurchaseEvent()->setAffiliation($data->getAffiliation());
         }
 
         if ($data->getCouponCode()) {
-            $this->analytics->setCouponCode($data->getCouponCode());
+            $this->getPurchaseEvent()->setCouponCode($data->getCouponCode());
         }
     }
 
-    /**
-     * @param $products
-     */
     public function addProducts($products)
     {
         foreach ($products as $product) {
@@ -120,13 +146,18 @@ class GAClient {
         }
     }
 
-    /**
-     * @param $data
-     */
     public function addProduct($data)
     {
         $this->productCounter++;
-        $this->analytics->addProduct($data->getData());
+
+        $itemParameter = new ItemParameter($data->getData());
+        $itemParameter->setItemId($data->getSku())
+            ->setItemName($data->getName())
+            ->setIndex($data->getPosition())
+            ->setPrice($data->getPrice())
+            ->setQuantity($data->getQuantity());
+
+        $this->getPurchaseEvent()->addItem($itemParameter);
     }
 
     /**
@@ -134,41 +165,28 @@ class GAClient {
      */
     public function firePurchaseEvent()
     {
-        if (!$this->analytics->getTransactionId()) {
-            throw new \Exception(__('No tracking ID set for transaction'));
-        }
-
-        if (!$this->analytics->getClientId() && !$this->analytics->getUserId()) {
-            throw new \Exception(__('No client ID or user ID set for transaction %s', $this->analytics->getTransactionId()));
-        }
-
-        if (!$this->analytics->getTrackingId()) {
-            throw new \Exception(__('No tracking ID set for transaction %s', $this->analytics->getTransactionId()));
-        }
-
         if (!$this->productCounter) {
-            throw new \Exception(__('No products have been added to transaction %s', $this->analytics->getTransactionId()));
+            throw new \Exception(__('No products have been added to transaction %s',
+                $this->getService()->getTransactionId()));
         }
 
-        $this->analytics->setProductActionToPurchase();
+        $this->getRequest()->addEvent($this->getPurchaseEvent())->validate();
 
-        $response = $this->analytics->setEventCategory('Checkout')
-            ->setEventAction('Purchase')
-            ->sendEvent();
+        $send = $this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE) ? 'sendDebug' : 'send';
+
+        /** @var $response BaseResponse|DebugResponse */
+        $response = $this->getService()->$send($this->getRequest());
 
         // @codingStandardsIgnoreStart
         if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE)) {
-            $this->logger->info('elgentos_serversideanalytics_debug_response: ', array($response->getDebugResponse()));
+            $this->logger->info('elgentos_serversideanalytics_debug_response: ', array($response->getData()));
         }
         if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING)) {
-            $this->logger->info('elgentos_serversideanalytics_requests: ', array($response->getRequestUrl()));
+            $this->logger->info('elgentos_serversideanalytics_requests: ', array($this->getRequest()->export()));
         }
         // @codingStandardsIgnoreEnd
     }
 
-    /**
-     * @return string
-     */
     public function getVersion(): string
     {
         return $this->version;
