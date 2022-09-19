@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
@@ -73,12 +74,18 @@ class SendPurchaseEvent implements ObserverInterface
 
         /** @var Invoice\Item $item */
         foreach ($invoice->getAllItems() as $item) {
-            if (!$item->isDeleted() && !$item->getOrderItem()->getParentItemId()) {
+            $orderItem = $item->getOrderItem();
+
+            if ($orderItem === null) {
+                continue;
+            }
+
+            if (!$item->isDeleted() && !$orderItem->getParentItemId()) {
                 $product = new DataObject([
                     'sku' => $item->getSku(),
                     'name' => $item->getName(),
-                    'price' => $this->getPaidProductPrice($item->getOrderItem()),
-                    'quantity' => $item->getOrderItem()->getQtyOrdered(),
+                    'price' => $this->getPaidProductPrice($orderItem),
+                    'quantity' => $orderItem->getQtyOrdered(),
                     'position' => $item->getId()
                 ]);
 
@@ -138,7 +145,7 @@ class SendPurchaseEvent implements ObserverInterface
         return $transactionDataObject;
     }
 
-    public function sendPurchaseEvent($client, DataObject $transactionDataObject, array $products, DataObject $trackingDataObject)
+    public function sendPurchaseEvent($client, DataObject $transactionDataObject, array $products, DataObject $trackingDataObject): void
     {
         try {
             $client->setTransactionData($transactionDataObject);
@@ -163,27 +170,22 @@ class SendPurchaseEvent implements ObserverInterface
     }
 
     /**
-     * Get the actual price the customer also saw in it's cart.
+     * Get the actual price the customer also saw in its cart.
      *
      * @param Item $orderItem
      *
      * @return float
      */
-    private function getPaidProductPrice(Item $orderItem)
+    private function getPaidProductPrice(Item $orderItem): float
     {
         return $this->scopeConfig->getValue('tax/display/type') == Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $orderItem->getBasePrice()
             : $orderItem->getBasePriceInclTax();
     }
 
-    /**
-     * @param Invoice $invoice
-     *
-     * @return float
-     */
-    private function getPaidShippingCosts(Invoice $invoice)
+    private function getPaidShippingCosts(Invoice $invoice): float
     {
-        return $this->scopeConfig->getValue('tax/display/type') == Config::DISPLAY_TYPE_EXCLUDING_TAX
+        return $this->scopeConfig->getValue('tax/display/type') === Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $invoice->getBaseShippingAmount()
             : $invoice->getBaseShippingInclTax();
     }

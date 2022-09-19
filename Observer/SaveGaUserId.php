@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
@@ -14,67 +15,35 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class SaveGaUserId implements ObserverInterface
 {
-    /**
-     * @var ScopeConfigInterface
-     */
-    private $scopeConfig;
+    private ScopeConfigInterface $scopeConfig;
+    private LoggerInterface $logger;
+    private CookieManagerInterface $cookieManager;
+    private GAClient $gaClient;
+    private UAClient $uaClient;
+    protected CartRepositoryInterface $quoteRepository;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var CookieManagerInterface
-     */
-    private $cookieManager;
-
-    /**
-     * @var GAClient
-     */
-    private $gaclient;
-
-    /**
-     * @var UAClient
-     */
-    private $uaclient;
-
-    /**
-     * @var CartRepositoryInterface
-     */
-    protected $quoteRepository;
-
-    /**
-     * SaveGaUserId constructor.
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Psr\Log\LoggerInterface $logger
-     * @param \Magento\Framework\Stdlib\CookieManagerInterface $cookieManager
-     * @param GAClient $gaclient
-     * @param UAClient $uaclient
-     * @param CartRepositoryInterface $quoteRepository
-     */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         LoggerInterface $logger,
         CookieManagerInterface $cookieManager,
-        GAClient $gaclient,
-        UAClient $uaclient,
+        GAClient $gaClient,
+        UAClient $uaClient,
         CartRepositoryInterface $quoteRepository
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->logger = $logger;
         $this->cookieManager = $cookieManager;
-        $this->gaclient = $gaclient;
-        $this->uaclient = $uaclient;
+        $this->gaClient = $gaClient;
+        $this->uaClient = $uaClient;
         $this->quoteRepository = $quoteRepository;
     }
 
     /**
      * When Order object is saved add the GA User Id if available in the cookies.
      *
-     * @param Observer $observer
+     * @param  Observer  $observer
+     * @throws \Exception
      */
-
     public function execute(Observer $observer)
     {
         if (
@@ -110,7 +79,7 @@ class SaveGaUserId implements ObserverInterface
      *
      * @return string|null
      */
-    protected function getUserIdFromCookie()
+    protected function getUserIdFromCookie(): ?string
     {
         $gaCookie = explode('.', $this->cookieManager->getCookie('_ga') ?? '');
 
@@ -130,8 +99,8 @@ class SaveGaUserId implements ObserverInterface
         }
 
         if (
-            $gaCookieVersion != 'GA' . $this->gaclient->getVersion() &&
-            $gaCookieVersion != 'UA' . $this->uaclient->getVersion()
+            $gaCookieVersion != 'GA' . $this->gaClient->getVersion() &&
+            $gaCookieVersion != 'UA' . $this->uaClient->getVersion()
         ) {
             $this->logger->info('Google Analytics cookie version differs from Measurement Protocol API version; please upgrade.');
             return null;
