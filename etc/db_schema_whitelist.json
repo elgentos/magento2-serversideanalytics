@@ -3,5 +3,10 @@
         "column": {
             "ga_user_id": true
         }
+    },
+    "quote": {
+        "column": {
+            "ga_user_id": true
+        }
     }
 }
