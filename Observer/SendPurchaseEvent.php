@@ -85,7 +85,7 @@ class SendPurchaseEvent implements ObserverInterface
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
         foreach ($invoice->getAllItems() as $item) {
             if (!$item->isDeleted() && !$item->getOrderItem()->getParentItemId()) {
-                $product = new \Magento\Framework\DataObject([
+                $product = new DataObject([
                     'sku' => $item->getSku(),
                     'name' => $item->getName(),
                     'price' => $this->getPaidProductPrice($item->getOrderItem()),
@@ -106,17 +106,7 @@ class SendPurchaseEvent implements ObserverInterface
             'document_path' => '/checkout/onepage/success/'
         ]);
 
-        $transactionDataObject = new DataObject(
-            [
-                'transaction_id' => $order->getIncrementId(),
-                'affiliation' => $order->getStoreName(),
-                'currency' => $invoice->getGlobalCurrencyCode(),
-                'revenue' => $invoice->getBaseGrandTotal(),
-                'tax' => $invoice->getBaseTaxAmount(),
-                'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
-                'coupon_code' => $order->getCouponCode()
-            ]
-        );
+        $transactionDataObject = $this->getTransactionDataObject($order, $invoice);
 
         if ($this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE))
         {
@@ -135,10 +125,42 @@ class SendPurchaseEvent implements ObserverInterface
                 $this->sendPurchaseEvent($this->uaclient, $transactionDataObject, $products, $trackingDataObject);
             }
         }
-
+        
         $this->emulation->stopEnvironmentEmulation();
     }
 
+    /**
+     * @param $order
+     * @param $invoice
+     *
+     * @return DataObject
+     */
+    public function getTransactionDataObject($order, $invoice): DataObject
+    {
+        $transactionDataObject = new DataObject(
+            [
+                'transaction_id' => $order->getIncrementId(),
+                'affiliation' => $order->getStoreName(),
+                'currency' => $invoice->getGlobalCurrencyCode(),
+                'revenue' => $invoice->getBaseGrandTotal(),
+                'tax' => $invoice->getBaseTaxAmount(),
+                'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
+                'coupon_code' => $order->getCouponCode()
+            ]
+        );
+
+        $this->event->dispatch('elgentos_serversideanalytics_transaction_data_transport_object',
+            ['transaction_data_object' => $transactionDataObject]);
+
+        return $transactionDataObject;
+    }
+
+    /**
+     * @param $client
+     * @param DataObject $transactionDataObject
+     * @param array $products
+     * @param DataObject $trackingDataObject
+     */
     public function sendPurchaseEvent($client, DataObject $transactionDataObject, array $products, DataObject $trackingDataObject)
     {
         try {

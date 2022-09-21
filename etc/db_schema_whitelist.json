@@ -1,0 +1,7 @@
+{
+    "sales_order": {
+        "column": {
+            "ga_user_id": true
+        }
+    }
+}

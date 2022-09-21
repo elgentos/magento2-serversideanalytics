@@ -33,6 +33,7 @@ class SaveGaUserId implements ObserverInterface
      * @var GAClient
      */
     private $gaclient;
+
     /**
      * @var UAClient
      */
@@ -129,7 +130,7 @@ class SaveGaUserId implements ObserverInterface
 
         if (
             $gaCookieVersion != 'GA' . $this->gaclient->getVersion() &&
-            $gaCookieVersion != 'GA' . $this->uaclient->getVersion()
+            $gaCookieVersion != 'UA' . $this->uaclient->getVersion()
         ) {
             $this->logger->info('Google Analytics cookie version differs from Measurement Protocol API version; please upgrade.');
             return null;
