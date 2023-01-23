@@ -95,7 +95,7 @@ class SaveGaUserId implements ObserverInterface
         $quote = $this->quoteRepository->get($order->getQuoteId());
         $gaUserId = $quote->getData('ga_user_id') ?: $this->getUserIdFromCookie();
         if ($gaUserId === null) {
-            $gaCookieUserId = random_int(1E8, 1E9);
+            $gaCookieUserId = random_int((int)1E8, (int)1E9);
             $gaCookieTimestamp = time();
             $gaUserId = implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
             $this->logger->info('Google Analytics cookie not found, generated temporary value: ' . $gaUserId);
