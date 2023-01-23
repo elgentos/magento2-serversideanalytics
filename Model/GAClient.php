@@ -175,7 +175,7 @@ class GAClient {
     public function firePurchaseEvent()
     {
         if (!$this->productCounter) {
-            throw new \Exception(__('No products have been added to transaction %s', $this->getService()->getTransactionId()));
+            throw new \Exception(__('No products have been added to transaction %s', $this->getPurchaseEvent()->getTransactionId()));
         }
 
         $this->getRequest()->addEvent($this->getPurchaseEvent())->validate();
