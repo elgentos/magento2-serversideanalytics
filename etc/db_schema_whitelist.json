@@ -1,7 +1,8 @@
 {
     "sales_order": {
         "column": {
-            "ga_user_id": true
+            "ga_user_id": true,
+            "ga_session_id": true
         }
     }
 }

@@ -9,5 +9,6 @@
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
     <table name="sales_order">
         <column name="ga_user_id" xsi:type="varchar" comment="Google Analytics User ID for Server Side Analytics" nullable="true" length="255"/>
+        <column name="ga_session_id" xsi:type="varchar" comment="Google Analytics Session ID for Server Side Analytics" nullable="true" length="255"/>
     </table>
 </schema>

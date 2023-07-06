@@ -8,7 +8,6 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Elgentos\ServerSideAnalytics\Model\GAClient;
-use Elgentos\ServerSideAnalytics\Model\UAClient;
 use Magento\Framework\Stdlib\CookieManagerInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
@@ -35,11 +34,6 @@ class SaveGaUserId implements ObserverInterface
     private $gaclient;
 
     /**
-     * @var UAClient
-     */
-    private $uaclient;
-
-    /**
      * @var CartRepositoryInterface
      */
     protected $quoteRepository;
@@ -50,7 +44,6 @@ class SaveGaUserId implements ObserverInterface
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Framework\Stdlib\CookieManagerInterface $cookieManager
      * @param GAClient $gaclient
-     * @param UAClient $uaclient
      * @param CartRepositoryInterface $quoteRepository
      */
     public function __construct(
@@ -58,14 +51,12 @@ class SaveGaUserId implements ObserverInterface
         LoggerInterface $logger,
         CookieManagerInterface $cookieManager,
         GAClient $gaclient,
-        UAClient $uaclient,
         CartRepositoryInterface $quoteRepository
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->logger = $logger;
         $this->cookieManager = $cookieManager;
         $this->gaclient = $gaclient;
-        $this->uaclient = $uaclient;
         $this->quoteRepository = $quoteRepository;
     }
 
@@ -77,24 +68,20 @@ class SaveGaUserId implements ObserverInterface
 
     public function execute(Observer $observer)
     {
-        if (
-            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE) &&
-            !$this->scopeConfig->getValue(UAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
-        ) {
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)) {
             return;
         }
 
-        if (
-            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE) &&
-            !$this->scopeConfig->getValue(UAClient::GOOGLE_ANALYTICS_SERVERSIDE_UA, ScopeInterface::SCOPE_STORE)
-        ) {
-            $this->logger->info('No Google Analytics secret or UA has been found in the ServerSideAnalytics configuration.');
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE)) {
+            $this->logger->info('No Google Analytics secret has been found in the ServerSideAnalytics configuration.');
             return;
         }
 
         $order = $observer->getEvent()->getOrder();
         $quote = $this->quoteRepository->get($order->getQuoteId());
         $gaUserId = $quote->getData('ga_user_id') ?: $this->getUserIdFromCookie();
+        $gaSessionId = $quote->getData('ga_session_id') ?: $this->getSessionIdFromCookie();
+
         if ($gaUserId === null) {
             $gaCookieUserId = random_int((int)1E8, (int)1E9);
             $gaCookieTimestamp = time();
@@ -102,7 +89,13 @@ class SaveGaUserId implements ObserverInterface
             $this->logger->info('Google Analytics cookie not found, generated temporary value: ' . $gaUserId);
         }
 
+        if ($gaSessionId === null) {
+            $gaSessionId = random_int((int)1E8, (int)1E9);
+            $this->logger->info('Google Analytics cookie not found, generated temporary value for session id: ' . $gaSessionId);
+        }
+
         $order->setData('ga_user_id', $gaUserId);
+        $order->setData('ga_session_id', $gaSessionId);
     }
 
     /**
@@ -129,14 +122,30 @@ class SaveGaUserId implements ObserverInterface
             return null;
         }
 
-        if (
-            $gaCookieVersion != 'GA' . $this->gaclient->getVersion() &&
-            $gaCookieVersion != 'UA' . $this->uaclient->getVersion()
-        ) {
+        if ($gaCookieVersion != 'GA' . $this->gaclient->getVersion()) {
             $this->logger->info('Google Analytics cookie version differs from Measurement Protocol API version; please upgrade.');
             return null;
         }
 
         return implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
+    }
+
+    /**
+     * Try to get the Google Analytics Session ID from the cookie
+     *
+     * @return string|null
+     */
+    protected function getSessionIdFromCookie()
+    {
+        $GaMeasurementId = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID, ScopeInterface::SCOPE_STORE);
+        $GaMeasurementId = str_replace('G-', '', $GaMeasurementId);
+
+        $gaCookie = explode('.', $this->cookieManager->getCookie('_ga_' . $GaMeasurementId) ?? '');
+
+        if (empty($gaCookie) || count($gaCookie) < 9) {
+            return null;
+        }
+
+        return $gaCookie[2];
     }
 }

@@ -16,9 +16,10 @@ bin/magento setup:upgrade
 ## Caveats
 - This extension disables the JS Purchase Event on the success page altogether. It will however track the pageview.
 - This extension only tracks **paid** orders (it fires on *sales_order_payment_pay*). Non-paid orders will never show up in Analytics. This is our current clients' use case, mileage may differ. PR's for code to also track non-paid orders are welcomed.
+- It can take up to 48 hours for Google Analytics to process the session data in order to link the conversion to the correct session.
 
 ## Further info
-- Compatible with UA Measurement Protocol and GA4 Measurement Protocol;
+- Compatible with GA4 Measurement Protocol;
 - Debugging is enabled when Magento is in developer mode. See `var/log/system.log` for the log;
 - Exceptions will be logged to `var/log/exceptions.log`;
 - The products in the payload are retrieve on invoice-basis, not on order-basis;
