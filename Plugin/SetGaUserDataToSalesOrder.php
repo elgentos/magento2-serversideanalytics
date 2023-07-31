@@ -123,10 +123,10 @@ class SetGaUserDataToSalesOrder
 
     protected function getSessionIdFromCookie()
     {
-        $GaMeasurementId = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID, ScopeInterface::SCOPE_STORE);
-        $GaMeasurementId = str_replace('G-', '', $GaMeasurementId);
+        $gaMeasurementId = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID, ScopeInterface::SCOPE_STORE);
+        $gaMeasurementId = str_replace('G-', '', $gaMeasurementId);
 
-        $gaCookie = explode('.', $this->cookieManager->getCookie('_ga_' . $GaMeasurementId) ?? '');
+        $gaCookie = explode('.', $this->cookieManager->getCookie('_ga_' . $gaMeasurementId) ?? '');
 
         if (empty($gaCookie) || count($gaCookie) < 9) {
             return null;
