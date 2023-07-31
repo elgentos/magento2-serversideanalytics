@@ -6,6 +6,7 @@ use Elgentos\ServerSideAnalytics\Model\GAClient;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\Collection;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Stdlib\CookieManagerInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Psr\Log\LoggerInterface;
@@ -44,17 +45,23 @@ class SetGaUserDataToSalesOrder
         OrderRepositoryInterface $subject,
         $result
     ) {
-
         if (
-            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE) &&
+            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
         ) {
             return;
         }
 
         if (
-            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE) &&
+            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE)
         ) {
             $this->logger->info('No Google Analytics secret has been found in the ServerSideAnalytics configuration.');
+            return;
+        }
+
+        if (
+            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID, ScopeInterface::SCOPE_STORE)
+        ) {
+            $this->logger->info('No Google Analytics Measurement ID has been found in the ServerSideAnalytics configuration.');
             return;
         }
 
