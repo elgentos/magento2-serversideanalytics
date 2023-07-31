@@ -56,6 +56,7 @@ class SendPurchaseEvent implements ObserverInterface
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
         $payment = $observer->getPayment();
+
         /** @var \Magento\Sales\Model\Order $order */
         $order = $payment->getOrder();
 
@@ -71,9 +72,11 @@ class SendPurchaseEvent implements ObserverInterface
         /** @var \Magento\Sales\Model\Order\Invoice $invoice */
         $invoice = $observer->getInvoice();
 
-        if (!$order->getData('ga_user_id')
+        $orderExtensionAttributes = $order->getExtensionAttributes();
+
+        if (!$orderExtensionAttributes->getGaUserId()
                 ||
-            !$order->getData('ga_session_id')
+            !$orderExtensionAttributes->getGaSessionId()
         ) {
             $this->emulation->stopEnvironmentEmulation();
             return;
@@ -100,7 +103,7 @@ class SendPurchaseEvent implements ObserverInterface
         }
 
         $trackingDataObject = new DataObject([
-            'client_id' => $order->getExtensionAttributes()->getGaUserId(),
+            'client_id' => $orderExtensionAttributes->getGaUserId(),
             'ip_override' => $order->getRemoteIp(),
             'document_path' => '/checkout/onepage/success/'
         ]);
@@ -132,7 +135,7 @@ class SendPurchaseEvent implements ObserverInterface
                 'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
                 'coupon_code' => $order->getCouponCode(),
-                'session_id' => $order->getExtensionAttributes()->getGaSessionId()
+                'session_id' => $orderExtensionAttributes->getGaSessionId()
             ]
         );
 
