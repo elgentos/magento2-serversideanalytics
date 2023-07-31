@@ -1,7 +1,13 @@
 {
-    "sales_order": {
+    "elgentos_serversideanalytics_sales_order": {
         "column": {
-            "ga_user_id": true
+            "id": true,
+            "order_id": true,
+            "ga_user_id": true,
+            "ga_session_id": true
+        },
+        "constraint": {
+            "PRIMARY": true
         }
     }
 }
