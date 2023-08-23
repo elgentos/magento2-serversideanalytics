@@ -75,7 +75,11 @@ class SaveGaUserDataToSalesOrder
         $elgentosSalesOrderData->setData('ga_user_id', $gaUserId);
         $elgentosSalesOrderData->setData('ga_session_id', $gaSessionId);
 
-        $this->elgentosSalesOrderRepository->save($elgentosSalesOrderData);
+        try {
+            $this->elgentosSalesOrderRepository->save($elgentosSalesOrderData);
+        } catch (\Exception $exception) {
+            $this->logger->info($exception->getMessage());
+        }
 
         return $result;
     }
