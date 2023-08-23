@@ -1,68 +1,61 @@
-<?php declare(strict_types=1);
+<?php
+
+/**
+ * Copyright Elgentos BV. All rights reserved.
+ * https://www.elgentos.nl/
+ */
+
+declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Plugin;
 
 use Elgentos\ServerSideAnalytics\Model\GAClient;
-use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\Collection;
-use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
+use Elgentos\ServerSideAnalytics\Model\SalesOrderFactory;
+use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Stdlib\CookieManagerInterface;
-use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\OrderManagementInterface;
+use Magento\Store\Model\ScopeInterface;
 use Psr\Log\LoggerInterface;
 
-class SetGaUserDataToSalesOrder
+class SaveGaUserDataToSalesOrder
 {
-    private CollectionFactory $elgentosSalesOrderCollectionFactory;
-
-    /**
-     * AddGaUserDataToSalesOrder constructor.
-     * @param CollectionFactory $acmeSalesOrderCollectionFactory
-     */
     public function __construct(
-        ScopeConfigInterface $scopeConfig,
-        LoggerInterface $logger,
-        CookieManagerInterface $cookieManager,
-        GAClient $gaclient,
-        CollectionFactory $elgentosSalesOrderCollectionFactory,
-        \Elgentos\ServerSideAnalytics\Model\SalesOrderFactory $elgentosSalesOrderFactory,
-        \Elgentos\ServerSideAnalytics\Model\SalesOrderRepository $elgentosSalesOrderRepository
+        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly LoggerInterface $logger,
+        private readonly SalesOrderFactory $elgentosSalesOrderFactory,
+        private readonly SalesOrderRepository $elgentosSalesOrderRepository,
+        private readonly CookieManagerInterface $cookieManager,
+        private readonly GAClient $gaclient
     ) {
-        $this->scopeConfig = $scopeConfig;
-        $this->logger = $logger;
-        $this->cookieManager = $cookieManager;
-        $this->gaclient = $gaclient;
-        $this->elgentosSalesOrderFactory = $elgentosSalesOrderFactory;
-        $this->elgentosSalesOrderRepository = $elgentosSalesOrderRepository;
     }
 
-    /**
-     * @param OrderRepositoryInterface $subject
-     * @param $result
-     * @return mixed
-     */
-    public function afterSave(
-        OrderRepositoryInterface $subject,
-        $result
-    ) {
+    public function afterPlace(
+        OrderManagementInterface $subject,
+        OrderInterface $result,
+        OrderInterface $order
+    ): OrderInterface {
+        $jusit = 'hoi';
+
         if (
             !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
         ) {
-            return;
+            return $result;
         }
 
         if (
             !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE)
         ) {
             $this->logger->info('No Google Analytics secret has been found in the ServerSideAnalytics configuration.');
-            return;
+            return $result;
         }
 
         if (
             !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID, ScopeInterface::SCOPE_STORE)
         ) {
             $this->logger->info('No Google Analytics Measurement ID has been found in the ServerSideAnalytics configuration.');
-            return;
+            return $result;
         }
 
         $order = $result;
@@ -82,7 +75,7 @@ class SetGaUserDataToSalesOrder
         $elgentosSalesOrderData->setData('ga_user_id', $gaUserId);
         $elgentosSalesOrderData->setData('ga_session_id', $gaSessionId);
 
-        $this->elgentosSalesOrderRepository->save($data);
+        $this->elgentosSalesOrderRepository->save($elgentosSalesOrderData);
 
         return $result;
     }
