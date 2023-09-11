@@ -33,7 +33,7 @@ class GAClient {
     protected $purchaseEvent;
 
     /* Google Analytics Measurement Protocol API version */
-    protected $version = '4';
+    protected $version = '1';
 
     /* Count how many products are added to the Analytics object */
     protected $productCounter = 0;
