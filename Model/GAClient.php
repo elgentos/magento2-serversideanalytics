@@ -71,7 +71,8 @@ class GAClient {
             return $this->service;
         }
 
-        $this->service = new Service($this->getApiSecret(), $this->getMeasurementId());
+        $this->service = new Service($this->getApiSecret());
+        $this->service->setMeasurementId($this->getMeasurementId());
 
         return $this->service;
     }
