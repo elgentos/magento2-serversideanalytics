@@ -181,16 +181,14 @@ class GAClient {
 
         $this->getRequest()->addEvent($this->getPurchaseEvent())->validate();
 
-        $send = $this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE) ? 'sendDebug' : 'send';
+        $send = $this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE, ScopeInterface::SCOPE_STORE) ? 'sendDebug' : 'send';
 
         /** @var $response BaseResponse|DebugResponse */
         $response = $this->getService()->$send($this->getRequest());
-
+        
         // @codingStandardsIgnoreStart
-        if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE)) {
-            $this->logger->info('elgentos_serversideanalytics_debug_response: ', array($response->getData()));
-        }
-        if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING)) {
+        if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
+            $this->logger->info('elgentos_serversideanalytics_debug_response: ', $response);
             $this->logger->info('elgentos_serversideanalytics_requests: ', array($this->getRequest()->export()));
         }
         // @codingStandardsIgnoreEnd
