@@ -135,7 +135,7 @@ class SendPurchaseEvent implements ObserverInterface
                 'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
                 'coupon_code' => $order->getCouponCode(),
-                'session_id' => $orderExtensionAttributes->getGaSessionId()
+                'session_id' => $order->getExtensionAttributes()->getGaSessionId()
             ]
         );
 
