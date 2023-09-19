@@ -36,8 +36,7 @@ class SaveGaUserDataToSalesOrder
         OrderInterface $result,
         OrderInterface $order
     ): OrderInterface {
-        $jusit = 'hoi';
-
+        
         if (
             !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
         ) {
