@@ -188,7 +188,7 @@ class GAClient {
         
         // @codingStandardsIgnoreStart
         if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
-            $this->logger->info('elgentos_serversideanalytics_debug_response: ', $response);
+            $this->logger->info('elgentos_serversideanalytics_debug_response: ', array($response));
             $this->logger->info('elgentos_serversideanalytics_requests: ', array($this->getRequest()->export()));
         }
         // @codingStandardsIgnoreEnd
