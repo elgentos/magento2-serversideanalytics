@@ -7,6 +7,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Event\ObserverInterface;
 use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Magento\Sales\Api\OrderRepositoryInterface;
 
 class SendPurchaseEvent implements ObserverInterface
 {
@@ -31,18 +32,22 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private $event;
 
+    private $orderRepository;
+
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Store\Model\App\Emulation $emulation,
         \Psr\Log\LoggerInterface $logger,
         \Elgentos\ServerSideAnalytics\Model\GAClient $gaclient,
-        \Magento\Framework\Event\ManagerInterface $event
+        \Magento\Framework\Event\ManagerInterface $event,
+        OrderRepositoryInterface $orderRepository
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->emulation = $emulation;
         $this->logger = $logger;
         $this->gaclient = $gaclient;
         $this->event = $event;
+        $this->orderRepository = $orderRepository;
     }
 
     /**
