@@ -27,10 +27,6 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private $gaclient;
     /**
-     * @var \Elgentos\ServerSideAnalytics\Model\UAClient
-     */
-    private $uaclient;
-    /**
      * @var \Magento\Framework\Event\ManagerInterface
      */
     private $event;
@@ -110,10 +106,7 @@ class SendPurchaseEvent implements ObserverInterface
 
         $transactionDataObject = $this->getTransactionDataObject($order, $invoice);
 
-        if ($this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE))
-        {
-            $this->sendPurchaseEvent($this->gaclient, $transactionDataObject, $products, $trackingDataObject);
-        }
+        $this->sendPurchaseEvent($this->gaclient, $transactionDataObject, $products, $trackingDataObject);
 
         $this->emulation->stopEnvironmentEmulation();
     }
