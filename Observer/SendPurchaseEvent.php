@@ -27,10 +27,6 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private $gaclient;
     /**
-     * @var \Elgentos\ServerSideAnalytics\Model\UAClient
-     */
-    private $uaclient;
-    /**
      * @var \Magento\Framework\Event\ManagerInterface
      */
     private $event;
@@ -58,9 +54,10 @@ class SendPurchaseEvent implements ObserverInterface
         $payment = $observer->getPayment();
 
         /** @var \Magento\Sales\Model\Order $order */
-        $order = $payment->getOrder();
+        $orderId = $payment->getOrder()->getId();
+        $orderStoreId = $payment->getOrder()->getStoreId();
 
-        $this->emulation->startEnvironmentEmulation($order->getStoreId(), 'adminhtml');
+        $this->emulation->startEnvironmentEmulation($orderStoreId, 'adminhtml');
 
         if (
             !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
@@ -72,6 +69,7 @@ class SendPurchaseEvent implements ObserverInterface
         /** @var \Magento\Sales\Model\Order\Invoice $invoice */
         $invoice = $observer->getInvoice();
 
+        $order = $this->orderRepository->get($orderId);
         $orderExtensionAttributes = $order->getExtensionAttributes();
 
         if (!$orderExtensionAttributes->getGaUserId()
@@ -83,6 +81,10 @@ class SendPurchaseEvent implements ObserverInterface
         }
 
         $products = [];
+
+        if ($this->scopeConfig->isSetFlag(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
+            $this->logger->info('elgentos_serversideanalytics_requests: GA UserID:' . $order->getExtensionAttributes()->getGaUserId());
+        }
 
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
         foreach ($invoice->getAllItems() as $item) {
@@ -110,10 +112,7 @@ class SendPurchaseEvent implements ObserverInterface
 
         $transactionDataObject = $this->getTransactionDataObject($order, $invoice);
 
-        if ($this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE))
-        {
-            $this->sendPurchaseEvent($this->gaclient, $transactionDataObject, $products, $trackingDataObject);
-        }
+        $this->sendPurchaseEvent($this->gaclient, $transactionDataObject, $products, $trackingDataObject);
 
         $this->emulation->stopEnvironmentEmulation();
     }
