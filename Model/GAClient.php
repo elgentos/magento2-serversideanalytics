@@ -134,6 +134,9 @@ class GAClient {
             ->setTax($data->getTax())
             ->setShipping($data->getShipping());
 
+        $this->getPurchaseEvent()->setParamValue('session_id', $data->getSessionId());
+        $this->getPurchaseEvent()->setParamValue('timestamp_micros', $data->getTimestampMicros());
+
         if ($data->getAffiliation()) {
             $this->getPurchaseEvent()->setAffiliation($data->getAffiliation());
         }
@@ -185,7 +188,7 @@ class GAClient {
 
         /** @var $response BaseResponse|DebugResponse */
         $response = $this->getService()->$send($this->getRequest());
-        
+
         // @codingStandardsIgnoreStart
         if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
             $this->logger->info('elgentos_serversideanalytics_debug_response: ', array($response));
