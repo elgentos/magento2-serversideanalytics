@@ -168,12 +168,13 @@ class SendPurchaseEvent implements ObserverInterface
         }
 
         try {
-            $client->setTrackingData($trackingDataObject);
-
             $this->event->dispatch(
                 'elgentos_serversideanalytics_tracking_data_transport_object',
                 ['tracking_data_object' => $trackingDataObject]
             );
+
+            $client->setTrackingData($trackingDataObject);
+
             $client->firePurchaseEvent();
         } catch (\Exception $e) {
             $this->logger->info($e);
