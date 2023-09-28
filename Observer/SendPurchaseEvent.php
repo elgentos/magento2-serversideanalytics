@@ -59,7 +59,8 @@ class SendPurchaseEvent implements ObserverInterface
         $payment = $observer->getPayment();
 
         /** @var \Magento\Sales\Model\Order $order */
-        $orderId = $payment->getOrder()->getId();
+        $order = $payment->getOrder();
+        $orderId = $order->getId();
         $orderStoreId = $payment->getOrder()->getStoreId();
 
         $this->emulation->startEnvironmentEmulation($orderStoreId, 'adminhtml');
@@ -74,7 +75,6 @@ class SendPurchaseEvent implements ObserverInterface
         /** @var \Magento\Sales\Model\Order\Invoice $invoice */
         $invoice = $observer->getInvoice();
 
-        $order = $this->orderRepository->get($orderId);
         $orderExtensionAttributes = $order->getExtensionAttributes();
 
         if (!$orderExtensionAttributes->getGaUserId()
@@ -135,7 +135,7 @@ class SendPurchaseEvent implements ObserverInterface
                 'transaction_id' => $order->getIncrementId(),
                 'affiliation' => $order->getStoreName(),
                 'currency' => $invoice->getGlobalCurrencyCode(),
-                'revenue' => $invoice->getBaseGrandTotal(),
+                'revenue' => $invoice->getBaseGrandTotal() - $invoice->getTaxAmount(),
                 'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
                 'coupon_code' => $order->getCouponCode(),
@@ -190,9 +190,7 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private function getPaidProductPrice(\Magento\Sales\Model\Order\Item $orderItem)
     {
-        return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_EXCLUDING_TAX
-            ? $orderItem->getBasePrice()
-            : $orderItem->getBasePriceInclTax();
+        return $orderItem->getPrice();
     }
 
     /**
@@ -202,8 +200,6 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private function getPaidShippingCosts(\Magento\Sales\Model\Order\Invoice $invoice)
     {
-        return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_EXCLUDING_TAX
-            ? $invoice->getBaseShippingAmount()
-            : $invoice->getBaseShippingInclTax();
+        return $invoice->getShippingAmount();
     }
 }
