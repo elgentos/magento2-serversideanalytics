@@ -33,7 +33,7 @@ class GAClient {
     protected $purchaseEvent;
 
     /* Google Analytics Measurement Protocol API version */
-    protected $version = '4';
+    protected $version = '1';
 
     /* Count how many products are added to the Analytics object */
     protected $productCounter = 0;
@@ -71,7 +71,8 @@ class GAClient {
             return $this->service;
         }
 
-        $this->service = new Service($this->getApiSecret(), $this->getMeasurementId());
+        $this->service = new Service($this->getApiSecret());
+        $this->service->setMeasurementId($this->getMeasurementId());
 
         return $this->service;
     }
@@ -133,6 +134,9 @@ class GAClient {
             ->setTax($data->getTax())
             ->setShipping($data->getShipping());
 
+        $this->getPurchaseEvent()->setParamValue('session_id', $data->getSessionId());
+        $this->getPurchaseEvent()->setParamValue('timestamp_micros', $data->getTimestampMicros());
+
         if ($data->getAffiliation()) {
             $this->getPurchaseEvent()->setAffiliation($data->getAffiliation());
         }
@@ -180,16 +184,14 @@ class GAClient {
 
         $this->getRequest()->addEvent($this->getPurchaseEvent())->validate();
 
-        $send = $this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE) ? 'sendDebug' : 'send';
+        $send = $this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE, ScopeInterface::SCOPE_STORE) ? 'sendDebug' : 'send';
 
         /** @var $response BaseResponse|DebugResponse */
         $response = $this->getService()->$send($this->getRequest());
 
         // @codingStandardsIgnoreStart
-        if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE)) {
-            $this->logger->info('elgentos_serversideanalytics_debug_response: ', array($response->getData()));
-        }
-        if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING)) {
+        if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
+            $this->logger->info('elgentos_serversideanalytics_debug_response: ', array($response));
             $this->logger->info('elgentos_serversideanalytics_requests: ', array($this->getRequest()->export()));
         }
         // @codingStandardsIgnoreEnd

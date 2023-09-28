@@ -2,34 +2,23 @@
 
 namespace Elgentos\ServerSideAnalytics\Model\Resolver;
 
+use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
+use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
 use Exception;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
-use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
+use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface;
 
 class GAResolver implements ResolverInterface
 {
-    /**
-     * @var CartRepositoryInterface
-     */
-    protected $quoteRepository;
-
-    /**
-     * @var MaskedQuoteIdToQuoteIdInterface
-     */
-    protected $maskedQuoteIdToQuoteId;
-
-    /**
-     * Construct.
-     * @param CartRepositoryInterface $quoteFactory
-     * @param MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId
-     */
     public function __construct(
-        CartRepositoryInterface $quoteRepository,
-        MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId
+        protected CartRepositoryInterface $quoteRepository,
+        protected MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId,
+        protected CollectionFactory $elgentosSalesOrderCollectionFactory,
+        protected SalesOrderRepository $elgentosSalesOrderRepository,
     ) {
         $this->quoteRepository = $quoteRepository;
         $this->maskedQuoteIdToQuoteId = $maskedQuoteIdToQuoteId;
@@ -52,11 +41,23 @@ class GAResolver implements ResolverInterface
         $cartId = is_numeric($args['cartId'])
             ? $args['cartId']
             : $this->maskedQuoteIdToQuoteId->execute($args['cartId']);
-        $quote = $this->quoteRepository->get($cartId);
 
-        if ($quote->getData('ga_user_id') !== $args['gaUserId']) {
-            $quote->setData('ga_user_id', $args['gaUserId'])->save();
+        /** @var Collection $elgentosSalesOrder */
+        $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
+        $elgentosSalesOrder = $elgentosSalesOrderCollection
+            ->addFieldToFilter('quote_id', $cartId)
+            ->getFirstItem();
+
+        $elgentosSalesOrder->setQuoteId($cartId);
+        if ($elgentosSalesOrder->getGaUserId() !== ($args['gaUserId'] ?? null)) {
+            $elgentosSalesOrder->setGaUserId($args['gaUserId']);
         }
+
+        if ($elgentosSalesOrder->getGaSessionId() !== ($args['gaSessionId'] ?? null)) {
+            $elgentosSalesOrder->setGaSessionId($args['gaSessionId']);
+        }
+
+        $this->elgentosSalesOrderRepository->save($elgentosSalesOrder);
 
         return [
             'cartId' => $cartId,
