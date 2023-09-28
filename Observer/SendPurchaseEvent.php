@@ -99,7 +99,7 @@ class SendPurchaseEvent implements ObserverInterface
                     'name' => $item->getName(),
                     'price' => $this->getPaidProductPrice($item->getOrderItem()),
                     'quantity' => $item->getOrderItem()->getQtyOrdered(),
-                    'position' => $item->getId(),
+                    'position' => $item->getId()
                 ]);
 
                 $this->event->dispatch('elgentos_serversideanalytics_product_item_transport_object',
