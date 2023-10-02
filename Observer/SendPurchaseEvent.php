@@ -59,8 +59,12 @@ class SendPurchaseEvent implements ObserverInterface
         $payment = $observer->getPayment();
 
         /** @var \Magento\Sales\Model\Order $order */
-        $order = $payment->getOrder();
-        $orderId = $order->getId();
+        $orderId = $payment->getOrder()->getId();
+
+        if (empty($orderId)) {
+            return;
+        }
+
         $orderStoreId = $payment->getOrder()->getStoreId();
 
         $this->emulation->startEnvironmentEmulation($orderStoreId, 'adminhtml');
@@ -75,6 +79,8 @@ class SendPurchaseEvent implements ObserverInterface
         /** @var \Magento\Sales\Model\Order\Invoice $invoice */
         $invoice = $observer->getInvoice();
 
+
+        $order = $this->orderRepository->get($orderId);
         $orderExtensionAttributes = $order->getExtensionAttributes();
 
         if (!$orderExtensionAttributes->getGaUserId()
