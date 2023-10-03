@@ -10,7 +10,10 @@
         <column xsi:type="int" name="id" unsigned="true" nullable="false" identity="true"
                 comment="Id"/>
 
-        <column xsi:type="int" name="order_id" unsigned="true" nullable="false"
+        <column xsi:type="int" name="quote_id" unsigned="true" nullable="true"
+                comment="Quote id"/>
+
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="true"
                 comment="Order id"/>
 
         <column xsi:type="varchar" name="ga_user_id" nullable="true" length="255"
@@ -22,12 +25,20 @@
             <column name="id"/>
         </constraint>
 
-<constraint xsi:type="unique" referenceId="ELGENTOS_SERVERSIDEANALYTICS_SALES_ORDER_ORDER_ID_UNIQUE">
+        <constraint xsi:type="unique" referenceId="ELGENTOS_SERVERSIDEANALYTICS_SALES_ORDER_QUOTE_ID_UNIQUE">
+            <column name="quote_id"/>
+        </constraint>
+
+        <constraint xsi:type="unique" referenceId="ELGENTOS_SERVERSIDEANALYTICS_SALES_ORDER_ORDER_ID_UNIQUE">
             <column name="order_id"/>
         </constraint>
 
         <constraint xsi:type="foreign" referenceId="ELGENTOS_SERVERSIDEANALYTICS_SALES_ORDER_ORDER_ID_SALES_ORDER_ENTITY_ID"
                     table="elgentos_serversideanalytics_sales_order" column="order_id" referenceTable="sales_order"
+                    referenceColumn="entity_id" onDelete="CASCADE"/>
+
+        <constraint xsi:type="foreign" referenceId="ELGENTOS_SERVERSIDEANALYTICS_SALES_ORDER_QUOTE_ID_QUOTE_ENTITY_ID"
+                    table="elgentos_serversideanalytics_sales_order" column="quote_id" referenceTable="quote"
                     referenceColumn="entity_id" onDelete="CASCADE"/>
     </table>
 </schema>

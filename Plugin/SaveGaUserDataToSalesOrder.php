@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Elgentos\ServerSideAnalytics\Plugin;
 
 use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderFactory;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -25,6 +26,7 @@ class SaveGaUserDataToSalesOrder
         private readonly ScopeConfigInterface $scopeConfig,
         private readonly LoggerInterface $logger,
         private readonly SalesOrderFactory $elgentosSalesOrderFactory,
+        private readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
         private readonly SalesOrderRepository $elgentosSalesOrderRepository,
         private readonly CookieManagerInterface $cookieManager,
         private readonly GAClient $gaclient
@@ -36,7 +38,7 @@ class SaveGaUserDataToSalesOrder
         OrderInterface $result,
         OrderInterface $order
     ): OrderInterface {
-        
+
         if (
             !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
         ) {
@@ -58,8 +60,14 @@ class SaveGaUserDataToSalesOrder
         }
 
         $order = $result;
-        $gaUserId = $this->getUserIdFromCookie();
-        $gaSessionId = $this->getSessionIdFromCookie();
+        /** @var Collection $elgentosSalesOrderCollection */
+        $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
+        $elgentosSalesOrderData = $elgentosSalesOrderCollection
+            ->addFieldToFilter('quote_id', $order->getQuoteId())
+            ->getFirstItem();
+
+        $gaUserId = $this->getUserIdFromCookie() ?? $elgentosSalesOrderData->getGaUserId();
+        $gaSessionId = $this->getSessionIdFromCookie() ?? $elgentosSalesOrderData->getSessionId();
 
         if ($gaUserId === null) {
             $gaCookieUserId = random_int((int)1E8, (int)1E9);
@@ -68,8 +76,7 @@ class SaveGaUserDataToSalesOrder
             $this->logger->info('Google Analytics cookie not found, generated temporary value: ' . $gaUserId);
         }
 
-        $elgentosSalesOrderData = $this->elgentosSalesOrderFactory->create();
-
+        $elgentosSalesOrderData->setData('quote_id', $order->getQuoteId());
         $elgentosSalesOrderData->setData('order_id', $order->getId());
         $elgentosSalesOrderData->setData('ga_user_id', $gaUserId);
         $elgentosSalesOrderData->setData('ga_session_id', $gaSessionId);

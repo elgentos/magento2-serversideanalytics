@@ -2,6 +2,7 @@
     "elgentos_serversideanalytics_sales_order": {
         "column": {
             "id": true,
+            "quote_id": true,
             "order_id": true,
             "ga_user_id": true,
             "ga_session_id": true
