@@ -1,10 +1,13 @@
 type Mutation {
-    AddGaUserId (
-        cartId: String!
-        gaUserId: String
-        gaSessionId: String
-    ) : AddGaUserIdOutput @resolver( class: "Elgentos\\ServerSideAnalytics\\Model\\Resolver\\GAResolver") @doc(description: "Add Google Analytics User Id and Session id to Quote")
+    AddGaUserId (input: AddGaUserIdInput) : AddGaUserIdOutput @resolver( class: "Elgentos\\ServerSideAnalytics\\Model\\Resolver\\GAResolver") @doc(description: "Add Google Analytics User Id and Session id to Quote")
 }
+
+input AddGaUserIdInput {
+    cartId: String!
+    gaUserId: String
+    gaSessionId: String
+}
+
 
 type AddGaUserIdOutput {
     cartId: String!
