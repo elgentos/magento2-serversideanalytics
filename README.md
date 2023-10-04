@@ -13,6 +13,25 @@ composer require elgentos/serversideanalytics2
 bin/magento setup:upgrade
 ```
 
+### Sample query for GraphQL to set the GA data
+
+```
+mutation AddGaUserId($cartId: String!, $gaUserId: String, $gaSessionId: String) {
+                            AddGaUserId(input: {
+                                    cartId: $cartId
+                                    gaUserId: $gaUserId
+                                    gaSessionId: $gaSessionId
+                                }
+                            ),
+                            {
+                               cartId
+                               maskedId
+                            }
+                    }
+```
+
+
+
 ## Caveats
 - This extension disables the JS Purchase Event on the success page altogether. It will however track the pageview.
 - This extension only tracks **paid** orders (it fires on *sales_order_payment_pay*). Non-paid orders will never show up in Analytics. This is our current clients' use case, mileage may differ. PR's for code to also track non-paid orders are welcomed.
