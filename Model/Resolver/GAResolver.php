@@ -34,13 +34,15 @@ class GAResolver implements ResolverInterface
         array $value = null,
         array $args = null
     ) {
-        if (is_numeric($args['cartId']) && false === $context->getExtensionAttributes()->getIsCustomer()) {
+        $input = $args['input'];
+
+        if (is_numeric($input['cartId']) && false === $context->getExtensionAttributes()->getIsCustomer()) {
             throw new GraphQlAuthorizationException(__('The current customer isn\'t authorized.'));
         }
 
-        $cartId = is_numeric($args['cartId'])
-            ? $args['cartId']
-            : $this->maskedQuoteIdToQuoteId->execute($args['cartId']);
+        $cartId = is_numeric($input['cartId'])
+            ? $input['cartId']
+            : $this->maskedQuoteIdToQuoteId->execute($input['cartId']);
 
         /** @var Collection $elgentosSalesOrder */
         $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
@@ -49,19 +51,19 @@ class GAResolver implements ResolverInterface
             ->getFirstItem();
 
         $elgentosSalesOrder->setQuoteId($cartId);
-        if ($elgentosSalesOrder->getGaUserId() !== ($args['gaUserId'] ?? null)) {
-            $elgentosSalesOrder->setGaUserId($args['gaUserId']);
+        if ($elgentosSalesOrder->getGaUserId() !== ($input['gaUserId'] ?? null)) {
+            $elgentosSalesOrder->setGaUserId($input['gaUserId']);
         }
 
-        if ($elgentosSalesOrder->getGaSessionId() !== ($args['gaSessionId'] ?? null)) {
-            $elgentosSalesOrder->setGaSessionId($args['gaSessionId']);
+        if ($elgentosSalesOrder->getGaSessionId() !== ($input['gaSessionId'] ?? null)) {
+            $elgentosSalesOrder->setGaSessionId($input['gaSessionId']);
         }
 
         $this->elgentosSalesOrderRepository->save($elgentosSalesOrder);
 
         return [
             'cartId' => $cartId,
-            'maskedId' => !is_numeric($args['cartId']) ? $args['cartId'] : null
+            'maskedId' => !is_numeric($input['cartId']) ? $input['cartId'] : null
         ];
     }
 }
