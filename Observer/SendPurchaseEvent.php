@@ -65,6 +65,7 @@ class SendPurchaseEvent implements ObserverInterface
         $elgentosSalesOrder = $elgentosSalesOrderCollection
             ->addFieldToFilter(['quote_id', 'order_id'],
                 [
+                    ['eq' => $gaUserDatabaseId],
                     ['eq' => $gaUserDatabaseId]
                 ])
             ->getFirstItem();
