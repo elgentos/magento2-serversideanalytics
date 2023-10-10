@@ -1,11 +1,7 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="Magento\Sales\Api\OrderRepositoryInterface">
-        <plugin name="elgentos_serversideanalytics_add_ga_user_data_to_sales_order" type="Elgentos\ServerSideAnalytics\Plugin\AddGaUserDataToSalesOrder"/>
-    </type>
-
-    <type name="Magento\Sales\Model\Service\OrderService">
-        <plugin name="SaveGaUserDataToSalesOrder"
-                type="Elgentos\ServerSideAnalytics\Plugin\SaveGaUserDataToSalesOrder"/>
+    <type name="Magento\Quote\Api\CartRepositoryInterface">
+        <plugin name="SaveGaUserDataToDb"
+                type="Elgentos\ServerSideAnalytics\Plugin\SaveGaUserDataToDb"/>
     </type>
 </config>
