@@ -75,7 +75,7 @@ class SaveGaUserDataToDb
         }
 
         $gaUserId = ($this->getUserIdFromCookie() !== $elgentosSalesOrderData->getGaUserId()) ? $this->getUserIdFromCookie() : $elgentosSalesOrderData->getGaUserId();
-        $gaSessionId = "sdfsdfsdsdf"; #($this->getSessionIdFromCookie() !== $elgentosSalesOrderData->getSessionId()) ? $this->getUserIdFromCookie() : $elgentosSalesOrderData->getGaUserId();
+        $gaSessionId = ($this->getSessionIdFromCookie() !== $elgentosSalesOrderData->getSessionId()) ? $this->getUserIdFromCookie() : $elgentosSalesOrderData->getGaUserId();
 
         if ($gaUserId === null) {
             $gaCookieUserId = random_int((int)1E8, (int)1E9);
