@@ -4,51 +4,29 @@ namespace Elgentos\ServerSideAnalytics\Observer;
 
 use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Event\ObserverInterface;
-use Elgentos\ServerSideAnalytics\Model\GAClient;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Store\Model\App\Emulation;
+use Psr\Log\LoggerInterface;
+use Magento\Framework\Event\ManagerInterface;
+use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
+use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
 
 class SendPurchaseEvent implements ObserverInterface
 {
-    /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
-     */
-    private $scopeConfig;
-    /**
-     * @var \Magento\Store\Model\App\Emulation
-     */
-    private $emulation;
-    /**
-     * @var \Psr\Log\LoggerInterface
-     */
-    private $logger;
-    /**
-     * @var \Elgentos\ServerSideAnalytics\Model\GAClient
-     */
-    private $gaclient;
-    /**
-     * @var \Magento\Framework\Event\ManagerInterface
-     */
-    private $event;
-
-    private $orderRepository;
-
     public function __construct(
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Store\Model\App\Emulation $emulation,
-        \Psr\Log\LoggerInterface $logger,
-        \Elgentos\ServerSideAnalytics\Model\GAClient $gaclient,
-        \Magento\Framework\Event\ManagerInterface $event,
-        OrderRepositoryInterface $orderRepository
-    ) {
-        $this->scopeConfig = $scopeConfig;
-        $this->emulation = $emulation;
-        $this->logger = $logger;
-        $this->gaclient = $gaclient;
-        $this->event = $event;
-        $this->orderRepository = $orderRepository;
-    }
+        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly Emulation $emulation,
+        private readonly LoggerInterface $logger,
+        private readonly GAClient $gaclient,
+        private readonly ManagerInterface $event,
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
+        private readonly SalesOrderRepository $elgentosSalesOrderRepository
+    ) {}
 
     /**
      * @param $observer
@@ -57,10 +35,20 @@ class SendPurchaseEvent implements ObserverInterface
     {
         /** @var \Magento\Sales\Model\Order\Payment $payment */
         $payment = $observer->getPayment();
+        $invoice = $observer->getInvoice();
 
-        /** @var \Magento\Sales\Model\Order $order */
-        $orderId = $payment->getOrder()->getId();
-        $orderStoreId = $payment->getOrder()->getStoreId();
+        $order = $payment->getOrder();
+        $orderStoreId = $order->getStoreId();
+
+        $gaUserDatabaseId = $order->getId();
+
+        if (!$gaUserDatabaseId) {
+            $gaUserDatabaseId = $payment->getOrder()->getQuoteId();
+        }
+
+        if(!$gaUserDatabaseId) {
+            return;
+        }
 
         $this->emulation->startEnvironmentEmulation($orderStoreId, 'adminhtml');
 
@@ -72,14 +60,18 @@ class SendPurchaseEvent implements ObserverInterface
         }
 
         /** @var \Magento\Sales\Model\Order\Invoice $invoice */
-        $invoice = $observer->getInvoice();
 
-        $order = $this->orderRepository->get($orderId);
-        $orderExtensionAttributes = $order->getExtensionAttributes();
+        $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
+        $elgentosSalesOrder = $elgentosSalesOrderCollection
+            ->addFieldToFilter(['quote_id', 'order_id'],
+                [
+                    ['eq' => $gaUserDatabaseId]
+                ])
+            ->getFirstItem();
 
-        if (!$orderExtensionAttributes->getGaUserId()
+        if (!$elgentosSalesOrder->getGaUserId()
                 ||
-            !$orderExtensionAttributes->getGaSessionId()
+            !$elgentosSalesOrder->getGaSessionId()
         ) {
             $this->emulation->stopEnvironmentEmulation();
             return;
@@ -88,7 +80,7 @@ class SendPurchaseEvent implements ObserverInterface
         $products = [];
 
         if ($this->scopeConfig->isSetFlag(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
-            $this->logger->info('elgentos_serversideanalytics_requests: GA UserID:' . $order->getExtensionAttributes()->getGaUserId());
+            $this->logger->info('elgentos_serversideanalytics_requests: GA UserID: ' . $elgentosSalesOrder->getGaUserId());
         }
 
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
@@ -110,12 +102,12 @@ class SendPurchaseEvent implements ObserverInterface
         }
 
         $trackingDataObject = new DataObject([
-            'client_id' => $orderExtensionAttributes->getGaUserId(),
+            'client_id' => $elgentosSalesOrder->getGaUserId(),
             'ip_override' => $order->getRemoteIp(),
             'document_path' => '/checkout/onepage/success/'
         ]);
 
-        $transactionDataObject = $this->getTransactionDataObject($order, $invoice);
+        $transactionDataObject = $this->getTransactionDataObject($order, $invoice, $elgentosSalesOrder);
 
         $this->sendPurchaseEvent($this->gaclient, $transactionDataObject, $products, $trackingDataObject);
 
@@ -128,7 +120,7 @@ class SendPurchaseEvent implements ObserverInterface
      *
      * @return DataObject
      */
-    public function getTransactionDataObject($order, $invoice): DataObject
+    public function getTransactionDataObject($order, $invoice, $elgentosSalesOrder): DataObject
     {
         $transactionDataObject = new DataObject(
             [
@@ -139,7 +131,7 @@ class SendPurchaseEvent implements ObserverInterface
                 'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
                 'coupon_code' => $order->getCouponCode(),
-                'session_id' => $order->getExtensionAttributes()->getGaSessionId(),
+                'session_id' => $elgentosSalesOrder->getGaSessionId(),
                 'timestamp_micros' => time()
             ]
         );
