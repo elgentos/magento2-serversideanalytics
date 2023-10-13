@@ -84,6 +84,11 @@ class SaveGaUserDataToDb
             $this->logger->info('Google Analytics cookie not found, generated temporary value: ' . $gaUserId);
         }
 
+        if ($gaSessionId === null) {
+            $gaSessionId = random_int((int)1E01, (int)1E010);
+            $this->logger->info('Google Analytics cookie not found, generated temporary value: ' . $gaSessionId);
+        }
+
         $elgentosSalesOrderData->setData('quote_id', $quote->getId());
         $elgentosSalesOrderData->setData('ga_user_id', $gaUserId);
         $elgentosSalesOrderData->setData('ga_session_id', $gaSessionId);
