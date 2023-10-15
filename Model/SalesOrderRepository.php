@@ -11,7 +11,8 @@ class SalesOrderRepository
     ) {
     }
 
-    public function save($data){
+    public function save($data)
+    {
         $this->resource->save($data);
     }
 }
