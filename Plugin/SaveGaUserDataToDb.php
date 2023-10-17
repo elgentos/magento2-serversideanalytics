@@ -43,21 +43,18 @@ class SaveGaUserDataToDb
         $result,
         $quote
     ) {
-        if (
-            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
         ) {
             return $result;
         }
 
-        if (
-            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE)
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE)
         ) {
             $this->logger->info('No Google Analytics secret has been found in the ServerSideAnalytics configuration.');
             return $result;
         }
 
-        if (
-            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID, ScopeInterface::SCOPE_STORE)
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID, ScopeInterface::SCOPE_STORE)
         ) {
             $this->logger->info('No Google Analytics Measurement ID has been found in the ServerSideAnalytics configuration.');
             return $result;
@@ -121,8 +118,7 @@ class SaveGaUserDataToDb
             return null;
         }
 
-        if (
-            $gaCookieVersion != 'GA' . $this->gaclient->getVersion()
+        if ($gaCookieVersion != 'GA' . $this->gaclient->getVersion()
         ) {
             $this->logger->info('Google Analytics cookie version differs from Measurement Protocol API version; please upgrade.');
             return null;

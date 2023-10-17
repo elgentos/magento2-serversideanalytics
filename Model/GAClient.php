@@ -9,7 +9,8 @@ use Br33f\Ga4\MeasurementProtocol\Dto\Response\BaseResponse;
 use Br33f\Ga4\MeasurementProtocol\Dto\Response\DebugResponse;
 use Magento\Store\Model\ScopeInterface;
 
-class GAClient {
+class GAClient
+{
 
     const GOOGLE_ANALYTICS_SERVERSIDE_ENABLED        = 'google/serverside_analytics/ga_enabled';
     const GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET     = 'google/serverside_analytics/api_secret';
@@ -55,11 +56,11 @@ class GAClient {
      * @param \Magento\Framework\App\State $state
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      */
-    public function __construct(\Magento\Framework\App\State $state,
-                                \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-                                \Psr\Log\LoggerInterface $logger
-    )
-    {
+    public function __construct(
+        \Magento\Framework\App\State $state,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Psr\Log\LoggerInterface $logger
+    ) {
         $this->state = $state;
         $this->scopeConfig = $scopeConfig;
         $this->logger = $logger;
@@ -204,5 +205,4 @@ class GAClient {
     {
         return $this->version;
     }
-
 }

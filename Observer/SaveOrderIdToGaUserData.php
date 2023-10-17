@@ -29,10 +29,10 @@ class SaveOrderIdToGaUserData implements ObserverInterface
     ) {
     }
 
-    public function execute(Observer $observer) {
+    public function execute(Observer $observer)
+    {
 
-        if (
-            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
         ) {
             return;
         }

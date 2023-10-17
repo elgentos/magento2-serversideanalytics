@@ -26,7 +26,8 @@ class SendPurchaseEvent implements ObserverInterface
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
         private readonly SalesOrderRepository $elgentosSalesOrderRepository
-    ) {}
+    ) {
+    }
 
     /**
      * @param $observer
@@ -46,14 +47,13 @@ class SendPurchaseEvent implements ObserverInterface
             $gaUserDatabaseId = $payment->getOrder()->getQuoteId();
         }
 
-        if(!$gaUserDatabaseId) {
+        if (!$gaUserDatabaseId) {
             return;
         }
 
         $this->emulation->startEnvironmentEmulation($orderStoreId, 'adminhtml');
 
-        if (
-            !$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
+        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
         ) {
             $this->emulation->stopEnvironmentEmulation();
             return;
@@ -63,11 +63,13 @@ class SendPurchaseEvent implements ObserverInterface
 
         $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
         $elgentosSalesOrder = $elgentosSalesOrderCollection
-            ->addFieldToFilter(['quote_id', 'order_id'],
+            ->addFieldToFilter(
+                ['quote_id', 'order_id'],
                 [
                     ['eq' => $gaUserDatabaseId],
                     ['eq' => $gaUserDatabaseId]
-                ])
+                ]
+            )
             ->getFirstItem();
 
         if (!$elgentosSalesOrder->getGaUserId()
@@ -95,8 +97,10 @@ class SendPurchaseEvent implements ObserverInterface
                     'position' => $item->getId()
                 ]);
 
-                $this->event->dispatch('elgentos_serversideanalytics_product_item_transport_object',
-                    ['product' => $product, 'item' => $item]);
+                $this->event->dispatch(
+                    'elgentos_serversideanalytics_product_item_transport_object',
+                    ['product' => $product, 'item' => $item]
+                );
 
                 $products[] = $product;
             }
@@ -137,8 +141,10 @@ class SendPurchaseEvent implements ObserverInterface
             ]
         );
 
-        $this->event->dispatch('elgentos_serversideanalytics_transaction_data_transport_object',
-            ['transaction_data_object' => $transactionDataObject]);
+        $this->event->dispatch(
+            'elgentos_serversideanalytics_transaction_data_transport_object',
+            ['transaction_data_object' => $transactionDataObject]
+        );
 
         return $transactionDataObject;
     }
