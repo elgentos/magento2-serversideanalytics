@@ -8,7 +8,11 @@
             "ga_session_id": true
         },
         "constraint": {
-            "PRIMARY": true
+            "PRIMARY": true,
+            "ELGENTOS_SERVERSIDEANALYTICS_SALES_ORDER_QUOTE_ID": true,
+            "ELGENTOS_SERVERSIDEANALYTICS_SALES_ORDER_ORDER_ID": true,
+            "FK_628E3DC6541785A5FE0A850CF165075E": true,
+            "ELGENTOS_SERVERSIDEANALYTICS_SALES_ORDER_QUOTE_ID_QUOTE_ENTT_ID": true
         }
     }
 }
