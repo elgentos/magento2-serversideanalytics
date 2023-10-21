@@ -112,6 +112,10 @@ class SendPurchaseEvent implements ObserverInterface
             'document_path' => '/checkout/onepage/success/'
         ]);
 
+        if ($userId = $payment->getOrder()->getCustomerId()) {
+            $trackingDataObject->setData('user_id', $userId);
+        }
+
         $transactionDataObject = $this->getTransactionDataObject($order, $invoice, $elgentosSalesOrder);
 
         $this->sendPurchaseEvent($this->gaclient, $transactionDataObject, $products, $trackingDataObject);
