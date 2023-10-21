@@ -8,13 +8,6 @@
                     <label>Google Analytics 4 Enable</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="ua" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Google Analytics UA tag</label>
-                    <comment><![CDATA[For example, UA-12384573. Multiple container ID's can be used, separate by comma]]></comment>
-                    <depends>
-                        <field id="google/serverside_analytics/enabled">1</field>
-                    </depends>
-                </field>
                 <field id="api_secret" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>API Secret</label>
                     <depends>
@@ -24,6 +17,13 @@
                 <field id="measurement_id" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Google Analytics Measurement Id</label>
                     <comment><![CDATA[For example, G-12384573]]></comment>
+                    <depends>
+                        <field id="google/serverside_analytics/ga_enabled">1</field>
+                    </depends>
+                </field>
+                <field id="fallback_session_id" translate="label" type="text" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Fallback session id</label>
+                    <comment><![CDATA[When an ad blocker is used, we cannot extract a session id from the cookie. So we create a fallback session id for all these orders. Marketing can now measure impact from ad blockers by filtering on one session id]]></comment>
                     <depends>
                         <field id="google/serverside_analytics/ga_enabled">1</field>
                     </depends>

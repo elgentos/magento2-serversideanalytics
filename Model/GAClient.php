@@ -12,11 +12,12 @@ use Magento\Store\Model\ScopeInterface;
 class GAClient
 {
 
-    const GOOGLE_ANALYTICS_SERVERSIDE_ENABLED        = 'google/serverside_analytics/ga_enabled';
-    const GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET     = 'google/serverside_analytics/api_secret';
-    const GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID = 'google/serverside_analytics/measurement_id';
-    const GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE     = 'google/serverside_analytics/debug_mode';
-    const GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING = 'google/serverside_analytics/enable_logging';
+    const GOOGLE_ANALYTICS_SERVERSIDE_ENABLED             = 'google/serverside_analytics/ga_enabled';
+    const GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET          = 'google/serverside_analytics/api_secret';
+    const GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID      = 'google/serverside_analytics/measurement_id';
+    const GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE          = 'google/serverside_analytics/debug_mode';
+    const GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING      = 'google/serverside_analytics/enable_logging';
+    const GOOGLE_ANALYTICS_SERVERSIDE_FALLBACK_SESSION_ID = 'google/serverside_analytics/fallback_session_id';
 
     /**
      * @var Service
