@@ -160,7 +160,7 @@ class GAClient
      * @param $products
      */
     public function addProducts($products)
-    {q
+    {
         foreach ($products as $product) {
             $this->addProduct($product);
         }
