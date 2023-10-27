@@ -125,7 +125,7 @@ class GAClient
 
         $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'
 
-        $this->getRequest()->setTimestampMicros(time());
+        $this->getRequest()->setTimestampMicros(str_replace('.', '',microtime(true)) . '00');
 
         if ($data->getUserId()) {
             $this->getRequest()->setUserId($data->getUserId()); // magento customer_id
@@ -145,7 +145,7 @@ class GAClient
             ->setShipping($data->getShipping());
 
         $this->getPurchaseEvent()->setParamValue('session_id', $data->getSessionId());
-        $this->getPurchaseEvent()->setParamValue('timestamp_micros', $data->getTimestampMicros());
+        $this->getPurchaseEvent()->setParamValue('timestamp_micros', microtime(true));
 
         if ($data->getAffiliation()) {
             $this->getPurchaseEvent()->setAffiliation($data->getAffiliation());
