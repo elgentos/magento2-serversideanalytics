@@ -140,8 +140,7 @@ class SendPurchaseEvent implements ObserverInterface
                 'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
                 'coupon_code' => $order->getCouponCode(),
-                'session_id' => $elgentosSalesOrder->getGaSessionId(),
-                'timestamp_micros' => time()
+                'session_id' => $elgentosSalesOrder->getGaSessionId()
             ]
         );
 

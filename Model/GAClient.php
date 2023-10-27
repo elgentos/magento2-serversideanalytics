@@ -124,6 +124,7 @@ class GAClient
         }
 
         $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'
+        $this->getRequest()->setTimestampMicros(time());
 
         if ($data->getUserId()) {
             $this->getRequest()->setUserId($data->getUserId()); // magento customer_id
@@ -194,8 +195,6 @@ class GAClient
         $baseRequest->addEvent($this->getPurchaseEvent());
 
         $baseRequest->validate();
-
-        var_dump($this->getRequest()->getUserId());die;
 
         $send = $this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE, ScopeInterface::SCOPE_STORE) ? 'sendDebug' : 'send';
 
