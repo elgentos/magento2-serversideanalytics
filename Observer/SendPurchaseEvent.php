@@ -83,7 +83,7 @@ class SendPurchaseEvent implements ObserverInterface
         $products = [];
 
         if ($this->scopeConfig->isSetFlag(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
-            $this->gaclient->createLog('elgentos_serversideanalytics_requests: GA UserID: ' . $elgentosSalesOrder->getGaUserId());
+            $this->gaclient->createLog('Got payment Pay event for Ga UserID: ' . $elgentosSalesOrder->getGaUserId(), []);
         }
 
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */

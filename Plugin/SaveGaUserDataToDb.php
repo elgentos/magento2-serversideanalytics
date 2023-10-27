@@ -43,11 +43,9 @@ class SaveGaUserDataToDb
         $result,
         $quote
     ) {
-        $this->gaclient->createLog('No Google Analytics sdfsdfsfd has been found in the ServerSideAnalytics configuration.');
-
         if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
         ) {
-            $this->gaclient->createLog('No Google Analytics secret has been found in the ServerSideAnalytics configuration.');
+            $this->gaclient->createLog('Google ServerSideAnalytics is disabled in the config.');
             return $result;
         }
 
@@ -81,12 +79,12 @@ class SaveGaUserDataToDb
             $gaCookieUserId = random_int((int)1E8, (int)1E9);
             $gaCookieTimestamp = time();
             $gaUserId = implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
-            $this->gaclient->createLog('Google Analytics cookie not found, generated temporary value: ' . $gaUserId);
+            $this->gaclient->createLog('Google Analytics cookie not found, generated temporary GA User Id: ' . $gaUserId);
         }
 
         if ($gaSessionId === null) {
             $gaSessionId = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_FALLBACK_SESSION_ID, ScopeInterface::SCOPE_STORE) ?? "1999999999";
-            $this->gaclient->createLog('Google Analytics cookie not found, generated temporary value: ' . $gaSessionId);
+            $this->gaclient->createLog('Google Analytics cookie not found, generated temporary for Session Id: ' . $gaSessionId);
         }
 
         $elgentosSalesOrderData->setData('quote_id', $quote->getId());

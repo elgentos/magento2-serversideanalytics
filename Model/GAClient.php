@@ -193,8 +193,8 @@ class GAClient
         /** @var $response BaseResponse|DebugResponse */
         $response = $this->getService()->$send($this->getRequest());
 
-        $this->createLog('elgentos_serversideanalytics_debug_response: ', array($response));
-        $this->createLog('elgentos_serversideanalytics_requests: ', array($this->getRequest()->export()));
+        $this->createLog('Request: ', array($this->getRequest()->export()));
+        $this->createLog('Response: ', array($response));
     }
 
     /**
@@ -205,11 +205,11 @@ class GAClient
         return $this->version;
     }
 
-    public function createLog($message) {
+    public function createLog($message, array $context = []) {
         if (!$this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
             return;
         }
 
-        $this->logger->info($message);
+        $this->logger->info($message, $context);
     }
 }
