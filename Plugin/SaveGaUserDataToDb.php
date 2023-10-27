@@ -82,8 +82,8 @@ class SaveGaUserDataToDb
         }
 
         if ($gaSessionId === null) {
-            $gaSessionId = random_int((int)1E01, (int)1E010);
-            $this->logger->info('Google Analytics cookie not found, generated temporary value: ' . $gaSessionId);
+            $gaSessionId = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_FALLBACK_SESSION_ID, ScopeInterface::SCOPE_STORE) ?? "1999999999";
+            $this->logger->info('Google Analytics cookie not found, used fallback value: ' . $gaSessionId);
         }
 
         $elgentosSalesOrderData->setData('quote_id', $quote->getId());
