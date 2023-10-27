@@ -124,6 +124,7 @@ class GAClient
         }
 
         $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'
+
         $this->getRequest()->setTimestampMicros(time());
 
         if ($data->getUserId()) {
@@ -159,7 +160,7 @@ class GAClient
      * @param $products
      */
     public function addProducts($products)
-    {
+    {q
         foreach ($products as $product) {
             $this->addProduct($product);
         }
@@ -201,7 +202,7 @@ class GAClient
         $response = $this->getService()->$send($baseRequest);
 
         $this->createLog('Request: ', array($this->getRequest()->export()));
-        $this->createLog('Response: ', array($response->getData()['validationMessages']));
+        $this->createLog('Response: ', array($response->getStatusCode(), $response->getValidationMessages()));
     }
 
     /**
