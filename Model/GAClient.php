@@ -124,6 +124,10 @@ class GAClient
         }
 
         $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'
+
+        if ($data->getUserId()) {
+            $this->getRequest()->setUserId($data->getUserId()); // magento customer_id
+        }
     }
 
     /**
@@ -186,15 +190,19 @@ class GAClient
             throw new \Exception(__('No products have been added to transaction %s', $this->getPurchaseEvent()->getTransactionId()));
         }
 
-        $this->getRequest()->addEvent($this->getPurchaseEvent())->validate();
+        $baseRequest = $this->getRequest();
+        $baseRequest->addEvent($this->getPurchaseEvent());
+
+        $baseRequest->validate();
+
+        var_dump($this->getRequest()->getUserId());die;
 
         $send = $this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE, ScopeInterface::SCOPE_STORE) ? 'sendDebug' : 'send';
 
-        /** @var $response BaseResponse|DebugResponse */
-        $response = $this->getService()->$send($this->getRequest());
+        $response = $this->getService()->$send($baseRequest);
 
         $this->createLog('Request: ', array($this->getRequest()->export()));
-        $this->createLog('Response: ', array($response));
+        $this->createLog('Response: ', array($response->getData()['validationMessages']));
     }
 
     /**
