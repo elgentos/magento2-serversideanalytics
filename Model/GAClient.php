@@ -7,6 +7,7 @@ use Br33f\Ga4\MeasurementProtocol\Dto\Request\BaseRequest;
 use Br33f\Ga4\MeasurementProtocol\Service;
 use Br33f\Ga4\MeasurementProtocol\Dto\Response\BaseResponse;
 use Br33f\Ga4\MeasurementProtocol\Dto\Response\DebugResponse;
+use DateTime;
 use Magento\Store\Model\ScopeInterface;
 use Elgentos\ServerSideAnalytics\Logger\Logger;
 
@@ -125,7 +126,7 @@ class GAClient
 
         $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'
 
-        $this->getRequest()->setTimestampMicros(str_replace('.', '',microtime(true)) . '00');
+        $this->getRequest()->setTimestampMicros($this->getMicroTime());
 
         if ($data->getUserId()) {
             $this->getRequest()->setUserId($data->getUserId()); // magento customer_id
@@ -144,11 +145,8 @@ class GAClient
             ->setTax($data->getTax())
             ->setShipping($data->getShipping());
 
-        $datetime = new DateTime();
-        $time = $datetime->format('Uu');
-
         $this->getPurchaseEvent()->setParamValue('session_id', $data->getSessionId());
-        $this->getPurchaseEvent()->setParamValue('timestamp_micros', $time);
+        $this->getPurchaseEvent()->setParamValue('timestamp_micros', $this->getMicroTime());
 
         if ($data->getAffiliation()) {
             $this->getPurchaseEvent()->setAffiliation($data->getAffiliation());
@@ -157,6 +155,15 @@ class GAClient
         if ($data->getCouponCode()) {
             $this->getPurchaseEvent()->setCouponCode($data->getCouponCode());
         }
+    }
+
+    /**
+     * @return Logger
+     */
+    public function getMicroTime(): string
+    {
+        $datetime = new DateTime();
+        return $datetime->format('Uu');
     }
 
     /**
