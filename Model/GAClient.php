@@ -144,8 +144,11 @@ class GAClient
             ->setTax($data->getTax())
             ->setShipping($data->getShipping());
 
+        $datetime = new DateTime();
+        $time = $datetime->format('Uu');
+
         $this->getPurchaseEvent()->setParamValue('session_id', $data->getSessionId());
-        $this->getPurchaseEvent()->setParamValue('timestamp_micros', microtime(true));
+        $this->getPurchaseEvent()->setParamValue('timestamp_micros', $time);
 
         if ($data->getAffiliation()) {
             $this->getPurchaseEvent()->setAffiliation($data->getAffiliation());
