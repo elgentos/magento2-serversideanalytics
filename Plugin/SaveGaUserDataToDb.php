@@ -21,7 +21,7 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\ScopeInterface;
-use Psr\Log\LoggerInterface;
+use Elgentos\ServerSideAnalytics\Logger\Logger;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 
@@ -29,7 +29,7 @@ class SaveGaUserDataToDb
 {
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
-        private readonly LoggerInterface $logger,
+        private readonly Logger $logger,
         private readonly SalesOrderFactory $elgentosSalesOrderFactory,
         private readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
         private readonly SalesOrderRepository $elgentosSalesOrderRepository,
@@ -45,18 +45,19 @@ class SaveGaUserDataToDb
     ) {
         if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
         ) {
+            $this->gaclient->createLog('Google ServerSideAnalytics is disabled in the config.');
             return $result;
         }
 
         if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_API_SECRET, ScopeInterface::SCOPE_STORE)
         ) {
-            $this->logger->info('No Google Analytics secret has been found in the ServerSideAnalytics configuration.');
+            $this->gaclient->createLog('No Google Analytics secret has been found in the ServerSideAnalytics configuration.');
             return $result;
         }
 
         if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_MEASUREMENT_ID, ScopeInterface::SCOPE_STORE)
         ) {
-            $this->logger->info('No Google Analytics Measurement ID has been found in the ServerSideAnalytics configuration.');
+            $this->gaclient->createLog('No Google Analytics Measurement ID has been found in the ServerSideAnalytics configuration.');
             return $result;
         }
 
@@ -78,12 +79,12 @@ class SaveGaUserDataToDb
             $gaCookieUserId = random_int((int)1E8, (int)1E9);
             $gaCookieTimestamp = time();
             $gaUserId = implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
-            $this->logger->info('Google Analytics cookie not found, generated temporary value: ' . $gaUserId);
+            $this->gaclient->createLog('Google Analytics cookie not found, generated temporary GA User Id: ' . $gaUserId);
         }
 
         if ($gaSessionId === null) {
             $gaSessionId = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_FALLBACK_SESSION_ID, ScopeInterface::SCOPE_STORE) ?? "1999999999";
-            $this->logger->info('Google Analytics cookie not found, used fallback value: ' . $gaSessionId);
+            $this->gaclient->createLog('Google Analytics cookie not found, generated temporary for Session Id: ' . $gaSessionId);
         }
 
         $elgentosSalesOrderData->setData('quote_id', $quote->getId());
@@ -93,7 +94,7 @@ class SaveGaUserDataToDb
         try {
             $this->elgentosSalesOrderRepository->save($elgentosSalesOrderData);
         } catch (\Exception $exception) {
-            $this->logger->info($exception->getMessage());
+            $this->gaclient->createLog($exception->getMessage());
         }
 
         return;
@@ -125,7 +126,7 @@ class SaveGaUserDataToDb
 
         if ($gaCookieVersion != 'GA' . $this->gaclient->getVersion()
         ) {
-            $this->logger->info('Google Analytics cookie version differs from Measurement Protocol API version; please upgrade.');
+            $this->gaclient->createLog('Google Analytics cookie version differs from Measurement Protocol API version; please upgrade.');
             return null;
         }
 

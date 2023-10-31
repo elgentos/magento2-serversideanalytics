@@ -4,4 +4,18 @@
         <plugin name="SaveGaUserDataToDb"
                 type="Elgentos\ServerSideAnalytics\Plugin\SaveGaUserDataToDb"/>
     </type>
+
+    <type name="Elgentos\ServerSideAnalytics\Logger\Handler">
+        <arguments>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+    <type name="Elgentos\ServerSideAnalytics\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">serversideanalytics</argument>
+            <argument name="handlers"  xsi:type="array">
+                <item name="system" xsi:type="object">Elgentos\ServerSideAnalytics\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

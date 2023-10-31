@@ -15,14 +15,14 @@ use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Store\Model\ScopeInterface;
-use Psr\Log\LoggerInterface;
+use Elgentos\ServerSideAnalytics\Logger\Logger;
 use Magento\Framework\Event\ObserverInterface;
 
 class SaveOrderIdToGaUserData implements ObserverInterface
 {
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
-        private readonly LoggerInterface $logger,
+        private readonly Logger $logger,
         private readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
         private readonly SalesOrderRepository $elgentosSalesOrderRepository,
         private readonly GAClient $gaclient
@@ -63,7 +63,7 @@ class SaveOrderIdToGaUserData implements ObserverInterface
         try {
             $this->elgentosSalesOrderRepository->save($elgentosSalesOrderData);
         } catch (\Exception $exception) {
-            $this->logger->info($exception->getMessage());
+            $this->gaclient->createLog($exception->getMessage());
         }
 
         return;

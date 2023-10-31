@@ -7,7 +7,9 @@ use Br33f\Ga4\MeasurementProtocol\Dto\Request\BaseRequest;
 use Br33f\Ga4\MeasurementProtocol\Service;
 use Br33f\Ga4\MeasurementProtocol\Dto\Response\BaseResponse;
 use Br33f\Ga4\MeasurementProtocol\Dto\Response\DebugResponse;
+use DateTime;
 use Magento\Store\Model\ScopeInterface;
+use Elgentos\ServerSideAnalytics\Logger\Logger;
 
 class GAClient
 {
@@ -47,8 +49,9 @@ class GAClient
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
     private $scopeConfig;
+
     /**
-     * @var \Psr\Log\LoggerInterface
+     * @var \Elgentos\ServerSideAnalytics\Logger\Logger
      */
     private $logger;
 
@@ -60,7 +63,7 @@ class GAClient
     public function __construct(
         \Magento\Framework\App\State $state,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Psr\Log\LoggerInterface $logger
+        \Elgentos\ServerSideAnalytics\Logger\Logger $logger
     ) {
         $this->state = $state;
         $this->scopeConfig = $scopeConfig;
@@ -122,6 +125,12 @@ class GAClient
         }
 
         $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'
+
+        $this->getRequest()->setTimestampMicros($this->getMicroTime());
+
+        if ($data->getUserId()) {
+            $this->getRequest()->setUserId($data->getUserId()); // magento customer_id
+        }
     }
 
     /**
@@ -137,7 +146,7 @@ class GAClient
             ->setShipping($data->getShipping());
 
         $this->getPurchaseEvent()->setParamValue('session_id', $data->getSessionId());
-        $this->getPurchaseEvent()->setParamValue('timestamp_micros', $data->getTimestampMicros());
+        $this->getPurchaseEvent()->setParamValue('timestamp_micros', $this->getMicroTime());
 
         if ($data->getAffiliation()) {
             $this->getPurchaseEvent()->setAffiliation($data->getAffiliation());
@@ -146,6 +155,15 @@ class GAClient
         if ($data->getCouponCode()) {
             $this->getPurchaseEvent()->setCouponCode($data->getCouponCode());
         }
+    }
+
+    /**
+     * @return Logger
+     */
+    public function getMicroTime(): string
+    {
+        $datetime = new DateTime();
+        return $datetime->format('Uu');
     }
 
     /**
@@ -184,19 +202,17 @@ class GAClient
             throw new \Exception(__('No products have been added to transaction %s', $this->getPurchaseEvent()->getTransactionId()));
         }
 
-        $this->getRequest()->addEvent($this->getPurchaseEvent())->validate();
+        $baseRequest = $this->getRequest();
+        $baseRequest->addEvent($this->getPurchaseEvent());
+
+        $baseRequest->validate();
 
         $send = $this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_DEBUG_MODE, ScopeInterface::SCOPE_STORE) ? 'sendDebug' : 'send';
 
-        /** @var $response BaseResponse|DebugResponse */
-        $response = $this->getService()->$send($this->getRequest());
+        $response = $this->getService()->$send($baseRequest);
 
-        // @codingStandardsIgnoreStart
-        if ($this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
-            $this->logger->info('elgentos_serversideanalytics_debug_response: ', array($response));
-            $this->logger->info('elgentos_serversideanalytics_requests: ', array($this->getRequest()->export()));
-        }
-        // @codingStandardsIgnoreEnd
+        $this->createLog('Request: ', array($this->getRequest()->export()));
+        $this->createLog('Response: ', array($response->getStatusCode(), $response->getValidationMessages()));
     }
 
     /**
@@ -205,5 +221,13 @@ class GAClient
     public function getVersion(): string
     {
         return $this->version;
+    }
+
+    public function createLog($message, array $context = []) {
+        if (!$this->scopeConfig->isSetFlag(self::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
+            return;
+        }
+
+        $this->logger->info($message, $context);
     }
 }

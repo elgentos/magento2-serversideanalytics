@@ -9,7 +9,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\App\Emulation;
-use Psr\Log\LoggerInterface;
+use Elgentos\ServerSideAnalytics\Logger\Logger;
 use Magento\Framework\Event\ManagerInterface;
 use Elgentos\ServerSideAnalytics\Model\GAClient;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
@@ -20,7 +20,7 @@ class SendPurchaseEvent implements ObserverInterface
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
         private readonly Emulation $emulation,
-        private readonly LoggerInterface $logger,
+        private readonly Logger $logger,
         private readonly GAClient $gaclient,
         private readonly ManagerInterface $event,
         private readonly OrderRepositoryInterface $orderRepository,
@@ -83,7 +83,7 @@ class SendPurchaseEvent implements ObserverInterface
         $products = [];
 
         if ($this->scopeConfig->isSetFlag(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
-            $this->logger->info('elgentos_serversideanalytics_requests: GA UserID: ' . $elgentosSalesOrder->getGaUserId());
+            $this->gaclient->createLog('Got payment Pay event for Ga UserID: ' . $elgentosSalesOrder->getGaUserId(), []);
         }
 
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
@@ -140,8 +140,7 @@ class SendPurchaseEvent implements ObserverInterface
                 'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
                 'coupon_code' => $order->getCouponCode(),
-                'session_id' => $elgentosSalesOrder->getGaSessionId(),
-                'timestamp_micros' => time()
+                'session_id' => $elgentosSalesOrder->getGaSessionId()
             ]
         );
 
@@ -166,7 +165,7 @@ class SendPurchaseEvent implements ObserverInterface
 
             $client->addProducts($products);
         } catch (\Exception $e) {
-            $this->logger->info($e);
+            $this->gaclient->createLog($e);
             return;
         }
 
@@ -180,7 +179,7 @@ class SendPurchaseEvent implements ObserverInterface
 
             $client->firePurchaseEvent();
         } catch (\Exception $e) {
-            $this->logger->info($e);
+            $this->gaclient->createLog($e);
         }
     }
 
