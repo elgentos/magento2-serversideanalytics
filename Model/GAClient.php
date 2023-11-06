@@ -212,7 +212,7 @@ class GAClient
         $response = $this->getService()->$send($baseRequest);
 
         $this->createLog('Request: ', array($this->getRequest()->export()));
-        $this->createLog('Response: ', array($response->getStatusCode(), $response->getValidationMessages()));
+        $this->createLog('Response: ', array($response->getStatusCode()));
     }
 
     /**
