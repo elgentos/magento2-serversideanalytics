@@ -61,7 +61,6 @@ class SaveGaUserDataToDb
             return $result;
         }
 
-
         /** @var Collection $elgentosSalesOrderCollection */
         $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
         $elgentosSalesOrderData = $elgentosSalesOrderCollection
@@ -72,24 +71,9 @@ class SaveGaUserDataToDb
             return;
         }
 
-        $gaUserId = ($this->getUserIdFromCookie() !== $elgentosSalesOrderData->getGaUserId()) ? ($this->getUserIdFromCookie() ?: $elgentosSalesOrderData->getGaUserId()) : $elgentosSalesOrderData->getGaUserId();
-        $gaSessionId = ($this->getSessionIdFromCookie() !== $elgentosSalesOrderData->getGaSessionId()) ? ($this->getSessionIdFromCookie() ?: $elgentosSalesOrderData->getGaSessionId()) : $elgentosSalesOrderData->getGaSessionId();
-
-        if ($gaUserId === null) {
-            $gaCookieUserId = random_int((int)1E8, (int)1E9);
-            $gaCookieTimestamp = time();
-            $gaUserId = implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
-            $this->gaclient->createLog('Google Analytics cookie not found, generated temporary GA User Id: ' . $gaUserId);
-        }
-
-        if ($gaSessionId === null) {
-            $gaSessionId = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_FALLBACK_SESSION_ID, ScopeInterface::SCOPE_STORE) ?? "1999999999";
-            $this->gaclient->createLog('Google Analytics cookie not found, generated temporary for Session Id: ' . $gaSessionId);
-        }
-
         $elgentosSalesOrderData->setData('quote_id', $quote->getId());
-        $elgentosSalesOrderData->setData('ga_user_id', $gaUserId);
-        $elgentosSalesOrderData->setData('ga_session_id', $gaSessionId);
+        $elgentosSalesOrderData->setData('ga_user_id', $this->getGaUserId());
+        $elgentosSalesOrderData->setData('ga_session_id', $this->getGaSessionId());
 
         try {
             $this->elgentosSalesOrderRepository->save($elgentosSalesOrderData);
@@ -99,6 +83,50 @@ class SaveGaUserDataToDb
 
         return;
     }
+
+    protected function getGaUserId() {
+        $gaUserId = $this->getUserIdFromCookie();
+
+        if ($gaUserId === null) {
+            $gaCookieUserId = random_int((int)1E8, (int)1E9);
+            $gaCookieTimestamp = time();
+            $gaUserId = implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
+            $this->gaclient->createLog('Google Analytics cookie not found, generated temporary GA User Id: ' . $gaUserId);
+        }
+
+        return $gaUserId;
+    }
+
+    protected  function getGaSessionId() {
+
+        $gaSessionId = $this->getSessionIdFromCookie();
+
+        if ($gaSessionId) {
+            return $gaSessionId;
+        }
+
+        if ($this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_FALLBACK_SESSION_ID_GENERATIONMODE,
+                ScopeInterface::SCOPE_STORE)
+            === '1'
+        ) {
+            return $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_FALLBACK_SESSION_ID, ScopeInterface::SCOPE_STORE) ?? '9999999999999';
+        }
+
+        if ($this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_FALLBACK_SESSION_ID_GENERATIONMODE,
+                ScopeInterface::SCOPE_STORE)
+            === '3'
+        ) {
+            $prefix = $this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_FALLBACK_SESSION_ID_PREFIX, ScopeInterface::SCOPE_STORE);
+            if (!$prefix) {
+                $prefix = '9999';
+            }
+
+            return $prefix . random_int((int)1E5, (int)1E6);
+        }
+
+        return random_int((int)1E5, (int)1E9);
+    }
+
 
     /**
      * Try to get the Google Analytics User ID from the cookie
