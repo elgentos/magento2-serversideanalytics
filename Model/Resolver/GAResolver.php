@@ -52,11 +52,11 @@ class GAResolver implements ResolverInterface
 
         $elgentosSalesOrder->setQuoteId($cartId);
         if ($elgentosSalesOrder->getGaUserId() !== ($input['gaUserId'] ?? null)) {
-            $elgentosSalesOrder->setGaUserId($input['gaUserId']);
+            $elgentosSalesOrder->setGaUserId($input['gaUserId'] ?? '');
         }
 
         if ($elgentosSalesOrder->getGaSessionId() !== ($input['gaSessionId'] ?? null)) {
-            $elgentosSalesOrder->setGaSessionId($input['gaSessionId']);
+            $elgentosSalesOrder->setGaSessionId($input['gaSessionId'] ?? '');
         }
 
         $this->elgentosSalesOrderRepository->save($elgentosSalesOrder);
