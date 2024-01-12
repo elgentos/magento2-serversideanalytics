@@ -89,12 +89,15 @@ class SendPurchaseEvent implements ObserverInterface
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
         foreach ($invoice->getAllItems() as $item) {
             if (!$item->isDeleted() && !$item->getOrderItem()->getParentItemId()) {
+                $orderItem = $item->getOrderItem();
+
                 $product = new DataObject([
                     'sku' => $item->getSku(),
                     'name' => $item->getName(),
                     'price' => $this->getPaidProductPrice($item->getOrderItem()),
-                    'quantity' => $item->getOrderItem()->getQtyOrdered(),
-                    'position' => $item->getId()
+                    'quantity' => $orderItem->getQtyOrdered(),
+                    'position' => $item->getId(),
+                    'item_brand' => $orderItem->getProduct()?->getAttributeText('manufacturer')
                 ]);
 
                 $this->event->dispatch(
