@@ -97,7 +97,7 @@ class SendPurchaseEvent implements ObserverInterface
                     'price' => $this->getPaidProductPrice($item->getOrderItem()),
                     'quantity' => $orderItem->getQtyOrdered(),
                     'position' => $item->getId(),
-                    'item_brand' => $orderItem->getProduct()->getAttributeText('manufacturer')
+                    'item_brand' => $orderItem->getProduct()?->getAttributeText('manufacturer')
                 ]);
 
                 $this->event->dispatch(
