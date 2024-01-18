@@ -1,0 +1,54 @@
+[1;33mdiff --git a/Observer/SendPurchaseEvent.php b/Observer/SendPurchaseEvent.php[m
+[1;33mindex 89bc290..1db3bdf 100644[m
+[1;33m--- a/Observer/SendPurchaseEvent.php[m
+[1;33m+++ b/Observer/SendPurchaseEvent.php[m
+[1;35m@@ -2,6 +2,7 @@[m
+ [m
+ namespace Elgentos\ServerSideAnalytics\Observer;[m
+ [m
+[1;32m+[m[1;32muse Elgentos\ServerSideAnalytics\Model\GAClient;[m
+ use Magento\Framework\DataObject;[m
+ use Magento\Framework\Event\Observer;[m
+ use Magento\Framework\App\Config\ScopeConfigInterface;[m
+[1;35m@@ -11,7 +12,7 @@[m [muse Magento\Sales\Api\OrderRepositoryInterface;[m
+ use Magento\Store\Model\App\Emulation;[m
+ use Elgentos\ServerSideAnalytics\Logger\Logger;[m
+ use Magento\Framework\Event\ManagerInterface;[m
+[1;31m-use Elgentos\ServerSideAnalytics\Model\GAClient;[m
+[1;32m+[m[1;32muse Elgentos\ServerSideAnalytics\Model\GAClientFactory;[m
+ use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;[m
+ use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;[m
+ [m
+[1;35m@@ -21,7 +22,7 @@[m [mclass SendPurchaseEvent implements ObserverInterface[m
+         private readonly ScopeConfigInterface $scopeConfig,[m
+         private readonly Emulation $emulation,[m
+         private readonly Logger $logger,[m
+[1;31m-        private readonly GAClient $gaclient,[m
+[1;32m+[m[1;32m        private readonly GAClientFactory $GAClientFactory,[m
+         private readonly ManagerInterface $event,[m
+         private readonly OrderRepositoryInterface $orderRepository,[m
+         private readonly CollectionFactory $elgentosSalesOrderCollectionFactory,[m
+[1;35m@@ -121,7 +122,7 @@[m [mclass SendPurchaseEvent implements ObserverInterface[m
+ [m
+         $transactionDataObject = $this->getTransactionDataObject($order, $invoice, $elgentosSalesOrder);[m
+ [m
+[1;31m-        $this->sendPurchaseEvent($this->gaclient, $transactionDataObject, $products, $trackingDataObject);[m
+[1;32m+[m[1;32m        $this->sendPurchaseEvent($this->GAClientFactory->create(), $transactionDataObject, $products, $trackingDataObject);[m
+ [m
+         $this->emulation->stopEnvironmentEmulation();[m
+     }[m
+[1;35m@@ -156,12 +157,12 @@[m [mclass SendPurchaseEvent implements ObserverInterface[m
+     }[m
+ [m
+     /**[m
+[1;31m-     * @param $client[m
+[1;32m+[m[1;32m     * @param GAClient $client[m
+      * @param DataObject $transactionDataObject[m
+      * @param array $products[m
+      * @param DataObject $trackingDataObject[m
+      */[m
+[1;31m-    public function sendPurchaseEvent($client, DataObject $transactionDataObject, array $products, DataObject $trackingDataObject)[m
+[1;32m+[m[1;32m    public function sendPurchaseEvent(GAClient $client, DataObject $transactionDataObject, array $products, DataObject $trackingDataObject)[m
+     {[m
+         try {[m
+             $client->setTransactionData($transactionDataObject);[m

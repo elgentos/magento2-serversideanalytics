@@ -12,6 +12,7 @@ use Magento\Store\Model\App\Emulation;
 use Elgentos\ServerSideAnalytics\Logger\Logger;
 use Magento\Framework\Event\ManagerInterface;
 use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Elgentos\ServerSideAnalytics\Model\GAClientFactory;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
 
@@ -21,7 +22,7 @@ class SendPurchaseEvent implements ObserverInterface
         private readonly ScopeConfigInterface $scopeConfig,
         private readonly Emulation $emulation,
         private readonly Logger $logger,
-        private readonly GAClient $gaclient,
+        private readonly GAClientFactory $GAClientFactory,
         private readonly ManagerInterface $event,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
@@ -82,8 +83,10 @@ class SendPurchaseEvent implements ObserverInterface
 
         $products = [];
 
+        $gaclient = $this->GAClientFactory->create();
+
         if ($this->scopeConfig->isSetFlag(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
-            $this->gaclient->createLog('Got payment Pay event for Ga UserID: ' . $elgentosSalesOrder->getGaUserId(), []);
+            $gaclient->createLog('Got payment Pay event for Ga UserID: ' . $elgentosSalesOrder->getGaUserId(), []);
         }
 
         /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
@@ -121,7 +124,7 @@ class SendPurchaseEvent implements ObserverInterface
 
         $transactionDataObject = $this->getTransactionDataObject($order, $invoice, $elgentosSalesOrder);
 
-        $this->sendPurchaseEvent($this->gaclient, $transactionDataObject, $products, $trackingDataObject);
+        $this->sendPurchaseEvent($gaclient, $transactionDataObject, $products, $trackingDataObject);
 
         $this->emulation->stopEnvironmentEmulation();
     }
@@ -156,19 +159,19 @@ class SendPurchaseEvent implements ObserverInterface
     }
 
     /**
-     * @param $client
+     * @param GAClient $client
      * @param DataObject $transactionDataObject
      * @param array $products
      * @param DataObject $trackingDataObject
      */
-    public function sendPurchaseEvent($client, DataObject $transactionDataObject, array $products, DataObject $trackingDataObject)
+    public function sendPurchaseEvent(GAClient $gaclient, DataObject $transactionDataObject, array $products, DataObject $trackingDataObject)
     {
         try {
-            $client->setTransactionData($transactionDataObject);
+            $gaclient->setTransactionData($transactionDataObject);
 
-            $client->addProducts($products);
+            $gaclient->addProducts($products);
         } catch (\Exception $e) {
-            $this->gaclient->createLog($e);
+            $gaclient->createLog($e);
             return;
         }
 
@@ -178,11 +181,11 @@ class SendPurchaseEvent implements ObserverInterface
                 ['tracking_data_object' => $trackingDataObject]
             );
 
-            $client->setTrackingData($trackingDataObject);
+            $gaclient->setTrackingData($trackingDataObject);
 
-            $client->firePurchaseEvent();
+            $gaclient->firePurchaseEvent();
         } catch (\Exception $e) {
-            $this->gaclient->createLog($e);
+            $gaclient->createLog($e);
         }
     }
 
