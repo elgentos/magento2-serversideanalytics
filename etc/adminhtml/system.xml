@@ -21,11 +21,26 @@
                         <field id="google/serverside_analytics/ga_enabled">1</field>
                     </depends>
                 </field>
-                <field id="fallback_session_id" translate="label" type="text" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Fallback session id</label>
-                    <comment><![CDATA[When an ad blocker is used, we cannot extract a session id from the cookie. So we create a fallback session id for all these orders. Marketing can now measure impact from ad blockers by filtering on one session id]]></comment>
+                <field id="fallback_session_id_generation_mode" translate="label" type="select" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Fallback Session id Mode</label>
+                    <source_model>Elgentos\ServerSideAnalytics\Model\Source\Fallback</source_model>
+                    <comment><![CDATA[Select the session id generation mode when no session id is available due to adblockers]]></comment>
                     <depends>
                         <field id="google/serverside_analytics/ga_enabled">1</field>
+                    </depends>
+                </field>
+                <field id="fallback_session_id" translate="label" type="text" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Fallback session id</label>
+                    <comment><![CDATA[The default fallback session id. One session id for all missing]]></comment>
+                    <depends>
+                        <field id="google/serverside_analytics/fallback_session_id_generation_mode">1</field>
+                    </depends>
+                </field>
+                <field id="fallback_session_id_prefix" translate="label" type="text" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Fallback Session Id Prefix</label>
+                    <comment><![CDATA[Prefix for session id so they are unique with a default prefix. Limit this on 4 numbers]]></comment>
+                    <depends>
+                        <field id="google/serverside_analytics/fallback_session_id_generation_mode">3</field>
                     </depends>
                 </field>
                 <field id="debug_mode" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
