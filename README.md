@@ -45,3 +45,4 @@ mutation AddGaUserId($cartId: String!, $gaUserId: String, $gaSessionId: String) 
 - An event has been added for you to add or overwrite custom fields to transaction data in the purchase event; `elgentos_serversideanalytics_transaction_data_transport_object`;
 - An event has been added for you to add or overwrite fields to tracking data in the purchase event; `elgentos_serversideanalytics_tracking_data_transport_object`;
 - Testing can be done by dispatching `test_event_for_serversideanalytics` with a `$payment` (`\Magento\Sales\Order\Payment`) object in the payload;
+- magerun2 dev:events:fire --eventName sales_order_payment_pay --parameters "payment::\Magento\Sales\Model\Order\Payment:X;invoice::\Magento\Sales\Model\Order\Invoice:X";
