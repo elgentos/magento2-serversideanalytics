@@ -152,7 +152,7 @@ class SendPurchaseEvent implements ObserverInterface
 
         $this->event->dispatch(
             'elgentos_serversideanalytics_transaction_data_transport_object',
-            ['transaction_data_object' => $transactionDataObject]
+            ['transaction_data_object' => $transactionDataObject, 'order' => $order]
         );
 
         return $transactionDataObject;
