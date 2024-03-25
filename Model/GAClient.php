@@ -140,23 +140,11 @@ class GAClient
      */
     public function setTransactionData($data)
     {
-        $this->getPurchaseEvent()
-            ->setTransactionId($data->getTransactionId())
-            ->setCurrency($data->getCurrency())
-            ->setValue($data->getRevenue())
-            ->setTax($data->getTax())
-            ->setShipping($data->getShipping());
+        foreach ($data->getData() as $key => $param) {
+            $this->getPurchaseEvent()->setParamValue($key, $param);
+        }
 
-        $this->getPurchaseEvent()->setParamValue('session_id', $data->getSessionId());
         $this->getPurchaseEvent()->setParamValue('timestamp_micros', $this->getMicroTime());
-
-        if ($data->getAffiliation()) {
-            $this->getPurchaseEvent()->setAffiliation($data->getAffiliation());
-        }
-
-        if ($data->getCouponCode()) {
-            $this->getPurchaseEvent()->setCouponCode($data->getCouponCode());
-        }
     }
 
     /**
