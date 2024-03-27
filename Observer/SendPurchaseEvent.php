@@ -142,7 +142,7 @@ class SendPurchaseEvent implements ObserverInterface
                 'transaction_id' => $order->getIncrementId(),
                 'affiliation' => $order->getStoreName(),
                 'currency' => $invoice->getGlobalCurrencyCode(),
-                'revenue' => $invoice->getBaseGrandTotal(),
+                'value' => $invoice->getBaseGrandTotal(),
                 'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
                 'coupon_code' => $order->getCouponCode(),
