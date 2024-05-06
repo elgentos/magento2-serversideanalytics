@@ -137,11 +137,16 @@ class SendPurchaseEvent implements ObserverInterface
      */
     public function getTransactionDataObject($order, $invoice, $elgentosSalesOrder): DataObject
     {
+        $currencySource = $this->scopeConfig->getValue(
+            GAClient::GOOGLE_ANALYTICS_SERVERSIDE_CURRENCY_SOURCE,
+            ScopeInterface::SCOPE_STORE
+        );
+
         $transactionDataObject = new DataObject(
             [
                 'transaction_id' => $order->getIncrementId(),
                 'affiliation' => $order->getStoreName(),
-                'currency' => $order->getBaseCurrencyCode(),
+                'currency' => $currencySource === 'order' ? $order->getBaseCurrencyCode() : $invoice->getGlobalCurrencyCode(),
                 'value' => $invoice->getBaseGrandTotal(),
                 'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
