@@ -2,6 +2,7 @@
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
+use Elgentos\ServerSideAnalytics\Model\Source\CurrencySource;
 use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -146,7 +147,7 @@ class SendPurchaseEvent implements ObserverInterface
             [
                 'transaction_id' => $order->getIncrementId(),
                 'affiliation' => $order->getStoreName(),
-                'currency' => $currencySource === 'order' ? $order->getBaseCurrencyCode() : $invoice->getGlobalCurrencyCode(),
+                'currency' => $currencySource === CurrencySource::ORDER ? $order->getBaseCurrencyCode() : $invoice->getGlobalCurrencyCode(),
                 'value' => $invoice->getBaseGrandTotal(),
                 'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
