@@ -13,7 +13,6 @@
       "email": "peterjaap@elgentos.nl"
     }
   ],
-
   "autoload": {
     "files": [
       "registration.php"

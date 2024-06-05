@@ -18,4 +18,9 @@
             </argument>
         </arguments>
     </type>
+    <type name="Elgentos\ServerSideAnalytics\Setup\UpgradeData">
+        <arguments>
+            <argument name="configWriter" xsi:type="object">Magento\Framework\App\Config\Storage\WriterInterface</argument>
+        </arguments>
+    </type>
 </config>

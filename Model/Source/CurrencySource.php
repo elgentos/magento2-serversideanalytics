@@ -1,4 +1,5 @@
-<?php declare(strict_types=1);
+<?php
+declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Model\Source;
 
@@ -6,8 +7,8 @@ use Magento\Framework\Data\OptionSourceInterface;
 
 class CurrencySource implements OptionSourceInterface
 {
-    const ORDER  = 1;
-    const GLOBAL = 2;
+    public const ORDER  = 1;
+    public const GLOBAL = 2;
 
     /**
      * Return array of options as value-label pairs
@@ -16,9 +17,9 @@ class CurrencySource implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        return array(
+        return [
             ['value' => self::ORDER, 'label' => 'Currency of the order'],
             ['value' => self::GLOBAL, 'label' => 'Default store currency'],
-        );
+        ];
     }
 }
