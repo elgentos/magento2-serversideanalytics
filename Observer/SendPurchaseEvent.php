@@ -2,6 +2,7 @@
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
+use Elgentos\ServerSideAnalytics\Model\Source\CurrencySource;
 use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -137,11 +138,16 @@ class SendPurchaseEvent implements ObserverInterface
      */
     public function getTransactionDataObject($order, $invoice, $elgentosSalesOrder): DataObject
     {
+        $currencySource = $this->scopeConfig->getValue(
+            GAClient::GOOGLE_ANALYTICS_SERVERSIDE_CURRENCY_SOURCE,
+            ScopeInterface::SCOPE_STORE
+        );
+
         $transactionDataObject = new DataObject(
             [
                 'transaction_id' => $order->getIncrementId(),
                 'affiliation' => $order->getStoreName(),
-                'currency' => $invoice->getGlobalCurrencyCode(),
+                'currency' => $currencySource === CurrencySource::GLOBAL ? $invoice->getGlobalCurrencyCode() : $order->getBaseCurrencyCode(),
                 'value' => $invoice->getBaseGrandTotal(),
                 'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),

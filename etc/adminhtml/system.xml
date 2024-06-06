@@ -43,6 +43,14 @@
                         <field id="google/serverside_analytics/fallback_session_id_generation_mode">3</field>
                     </depends>
                 </field>
+                <field id="currency_source" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Currency source</label>
+                    <source_model>Elgentos\ServerSideAnalytics\Model\Source\CurrencySource</source_model>
+                    <comment><![CDATA[This should be 'Currency of the order' in most cases. If however you want the 'global' currency code to be send with the order-value choose 'Default store currency'.]]></comment>
+                    <depends>
+                        <field id="google/serverside_analytics/ga_enabled">1</field>
+                    </depends>
+                </field>
                 <field id="debug_mode" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Enable Debug Mode</label>
                     <comment><![CDATA[<strong>Warning:</strong> When this is enabled, transactions will not be pushed to Google Analytics, only debugged]]></comment>
