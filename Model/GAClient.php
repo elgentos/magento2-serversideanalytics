@@ -1,4 +1,10 @@
 <?php
+/**
+ * Copyright Elgentos BV. All rights reserved.
+ * https://www.elgentos.nl/
+ */
+declare(strict_types=1);
+
 namespace Elgentos\ServerSideAnalytics\Model;
 
 use Br33f\Ga4\MeasurementProtocol\Dto\Event\PurchaseEvent;
