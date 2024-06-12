@@ -7,11 +7,12 @@ declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
+use Elgentos\ServerSideAnalytics\Config\ModuleConfiguration;
 use Elgentos\ServerSideAnalytics\Model\Source\CurrencySource;
 use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Store\Model\ScopeInterface;
+use Magento\Sales\Model\Order\Invoice;
+use Magento\Sales\Model\Order\Item;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\App\Emulation;
@@ -21,11 +22,12 @@ use Elgentos\ServerSideAnalytics\Model\GAClient;
 use Elgentos\ServerSideAnalytics\Model\GAClientFactory;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
+use Magento\Tax\Model\Config;
 
 class SendPurchaseEvent implements ObserverInterface
 {
     public function __construct(
-        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly ModuleConfiguration $moduleConfiguration,
         private readonly Emulation $emulation,
         private readonly Logger $logger,
         private readonly GAClientFactory $GAClientFactory,
@@ -60,8 +62,7 @@ class SendPurchaseEvent implements ObserverInterface
 
         $this->emulation->startEnvironmentEmulation($orderStoreId, 'adminhtml');
 
-        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
-        ) {
+        if (!$this->moduleConfiguration->isReadyForUse()) {
             $this->emulation->stopEnvironmentEmulation();
             return;
         }
@@ -91,7 +92,7 @@ class SendPurchaseEvent implements ObserverInterface
 
         $gaclient = $this->GAClientFactory->create();
 
-        if ($this->scopeConfig->isSetFlag(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLE_LOGGING, ScopeInterface::SCOPE_STORE)) {
+        if ($this->moduleConfiguration->isLogging()) {
             $gaclient->createLog('Got payment Pay event for Ga UserID: ' . $elgentosSalesOrder->getGaUserId(), []);
         }
 
@@ -143,16 +144,15 @@ class SendPurchaseEvent implements ObserverInterface
      */
     public function getTransactionDataObject($order, $invoice, $elgentosSalesOrder): DataObject
     {
-        $currencySource = $this->scopeConfig->getValue(
-            GAClient::GOOGLE_ANALYTICS_SERVERSIDE_CURRENCY_SOURCE,
-            ScopeInterface::SCOPE_STORE
-        );
+        $currency = $this->moduleConfiguration->getCurrencySource() === CurrencySource::GLOBAL ?
+            $invoice->getGlobalCurrencyCode() :
+            $order->getBaseCurrencyCode();
 
         $transactionDataObject = new DataObject(
             [
                 'transaction_id' => $order->getIncrementId(),
                 'affiliation' => $order->getStoreName(),
-                'currency' => $currencySource === CurrencySource::GLOBAL ? $invoice->getGlobalCurrencyCode() : $order->getBaseCurrencyCode(),
+                'currency' => $currency,
                 'value' => $invoice->getBaseGrandTotal(),
                 'tax' => $invoice->getBaseTaxAmount(),
                 'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
