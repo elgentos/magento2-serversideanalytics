@@ -43,6 +43,14 @@
                         <field id="google/serverside_analytics/fallback_session_id_generation_mode">3</field>
                     </depends>
                 </field>
+                <field id="trigger_on_event" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Triggering event</label>
+                    <source_model>Elgentos\ServerSideAnalytics\Model\Source\TriggerEvent</source_model>
+                    <comment><![CDATA[At what point in the order's life do we want Google Analytics to know about it?]]></comment>
+                    <depends>
+                        <field id="google/serverside_analytics/ga_enabled">1</field>
+                    </depends>
+                </field>
                 <field id="currency_source" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Currency source</label>
                     <source_model>Elgentos\ServerSideAnalytics\Model\Source\CurrencySource</source_model>
