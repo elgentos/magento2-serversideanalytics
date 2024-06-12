@@ -67,6 +67,10 @@ class SaveGaUserDataToDb
             ->addFieldToFilter('quote_id', $quote->getId())
             ->getFirstItem();
 
+        if ($this->getUserIdFromCookie() === null && $elgentosSalesOrderData->getGaUserId() !== null) {
+            return;
+        }
+        
         if ($this->getGaUserId() === $elgentosSalesOrderData->getGaUserId()) {
             return;
         }
