@@ -63,7 +63,5 @@ class SaveOrderIdToGaUserData implements ObserverInterface
         } catch (\Exception $exception) {
             $this->gaclient->createLog($exception->getMessage());
         }
-
-        return;
     }
 }

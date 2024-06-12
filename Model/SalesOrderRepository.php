@@ -5,12 +5,15 @@
  */
 declare(strict_types=1);
 
+
 namespace Elgentos\ServerSideAnalytics\Model;
+
+use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder as SalesOrderResource;
 
 class SalesOrderRepository
 {
     public function __construct(
-        private readonly \Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder $resource,
+        private readonly SalesOrderResource $resource,
     ) {
     }
 

@@ -14,6 +14,8 @@ use Br33f\Ga4\MeasurementProtocol\Service;
 use Br33f\Ga4\MeasurementProtocol\Dto\Response\BaseResponse;
 use Br33f\Ga4\MeasurementProtocol\Dto\Response\DebugResponse;
 use DateTime;
+use Exception;
+use Magento\Framework\DataObject;
 use Magento\Store\Model\ScopeInterface;
 use Elgentos\ServerSideAnalytics\Logger\Logger;
 

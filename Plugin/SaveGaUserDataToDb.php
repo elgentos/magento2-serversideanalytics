@@ -80,8 +80,6 @@ class SaveGaUserDataToDb
         } catch (\Exception $exception) {
             $this->gaclient->createLog($exception->getMessage());
         }
-
-        return;
     }
 
     protected function getGaUserId() {

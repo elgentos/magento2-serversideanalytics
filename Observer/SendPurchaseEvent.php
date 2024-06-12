@@ -66,7 +66,7 @@ class SendPurchaseEvent implements ObserverInterface
             return;
         }
 
-        /** @var \Magento\Sales\Model\Order\Invoice $invoice */
+        /** @var Invoice $invoice */
 
         $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
         $elgentosSalesOrder = $elgentosSalesOrderCollection
@@ -203,25 +203,25 @@ class SendPurchaseEvent implements ObserverInterface
     /**
      * Get the actual price the customer also saw in it's cart.
      *
-     * @param \Magento\Sales\Model\Order\Item $orderItem
+     * @param Item $orderItem
      *
      * @return float
      */
-    private function getPaidProductPrice(\Magento\Sales\Model\Order\Item $orderItem)
+    private function getPaidProductPrice(Item $orderItem)
     {
-        return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_EXCLUDING_TAX
+        return $this->scopeConfig->getValue('tax/display/type') == Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $orderItem->getBasePrice()
             : $orderItem->getBasePriceInclTax();
     }
 
     /**
-     * @param \Magento\Sales\Model\Order\Invoice $invoice
+     * @param Invoice $invoice
      *
      * @return float
      */
-    private function getPaidShippingCosts(\Magento\Sales\Model\Order\Invoice $invoice)
+    private function getPaidShippingCosts(Invoice $invoice)
     {
-        return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_EXCLUDING_TAX
+        return $this->scopeConfig->getValue('tax/display/type') == Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $invoice->getBaseShippingAmount()
             : $invoice->getBaseShippingInclTax();
     }

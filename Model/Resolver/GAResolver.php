@@ -9,7 +9,6 @@ namespace Elgentos\ServerSideAnalytics\Model\Resolver;
 
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
-use Exception;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
@@ -25,8 +24,6 @@ class GAResolver implements ResolverInterface
         protected CollectionFactory $elgentosSalesOrderCollectionFactory,
         protected SalesOrderRepository $elgentosSalesOrderRepository,
     ) {
-        $this->quoteRepository = $quoteRepository;
-        $this->maskedQuoteIdToQuoteId = $maskedQuoteIdToQuoteId;
     }
 
     /**
