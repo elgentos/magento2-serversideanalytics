@@ -35,7 +35,9 @@ class SaveGaUserDataToDb
         $quote
     ) {
         if (!$this->moduleConfiguration->isReadyForUse()) {
-            $this->gaclient->createLog('Google ServerSideAnalytics is disabled or not configured check the ServerSideAnalytics configuration.');
+            $this->gaclient->createLog(
+                'Google ServerSideAnalytics is disabled or not configured check the ServerSideAnalytics configuration.'
+            );
             return $result;
         }
 
@@ -68,7 +70,9 @@ class SaveGaUserDataToDb
             $gaCookieUserId = random_int((int)1E8, (int)1E9);
             $gaCookieTimestamp = time();
             $gaUserId = implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
-            $this->gaclient->createLog('Google Analytics cookie not found, generated temporary GA User Id: ' . $gaUserId);
+            $this->gaclient->createLog(
+                'Google Analytics cookie not found, generated temporary GA User Id: ' . $gaUserId
+            );
         }
 
         return $gaUserId;
@@ -126,7 +130,9 @@ class SaveGaUserDataToDb
         if (
             $gaCookieVersion != 'GA' . $this->gaclient->getVersion()
         ) {
-            $this->gaclient->createLog('Google Analytics cookie version differs from Measurement Protocol API version; please upgrade.');
+            $this->gaclient->createLog(
+                'Google Analytics cookie version differs from Measurement Protocol API version; please upgrade.'
+            );
             return null;
         }
 
@@ -138,7 +144,10 @@ class SaveGaUserDataToDb
         $gaMeasurementId = $this->moduleConfiguration->getMeasurementId();
         $gaMeasurementId = str_replace('G-', '', $gaMeasurementId);
 
-        $gaCookie = explode('.', $this->cookieManager->getCookie('_ga_' . $gaMeasurementId) ?? '');
+        $gaCookie = explode(
+            '.',
+            $this->cookieManager->getCookie('_ga_' . $gaMeasurementId) ?? ''
+        );
 
         if (count($gaCookie) < 9) {
             return null;
