@@ -1,14 +1,17 @@
 <?php
+
 /**
  * Copyright Elgentos BV. All rights reserved.
  * https://www.elgentos.nl/
  */
+
 declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
 use Elgentos\ServerSideAnalytics\Config\ModuleConfiguration;
 use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\Collection;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
 use Magento\Framework\Event\Observer;
@@ -17,10 +20,10 @@ use Magento\Framework\Event\ObserverInterface;
 class SaveOrderIdToGaUserData implements ObserverInterface
 {
     public function __construct(
-        private readonly ModuleConfiguration $moduleConfiguration,
-        private readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
-        private readonly SalesOrderRepository $elgentosSalesOrderRepository,
-        private readonly GAClient $gaclient
+        protected readonly ModuleConfiguration $moduleConfiguration,
+        protected readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
+        protected readonly SalesOrderRepository $elgentosSalesOrderRepository,
+        protected readonly GAClient $gaclient
     ) {
     }
 
@@ -48,7 +51,7 @@ class SaveOrderIdToGaUserData implements ObserverInterface
             ->addFieldToFilter('quote_id', $quote->getId())
             ->getFirstItem();
 
-        if (!$elgentosSalesOrderData) {
+        if (empty($elgentosSalesOrderData->getData('quote_id'))) {
             return;
         }
 

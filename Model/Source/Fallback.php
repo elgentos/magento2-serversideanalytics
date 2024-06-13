@@ -1,8 +1,10 @@
 <?php
+
 /**
  * Copyright Elgentos BV. All rights reserved.
  * https://www.elgentos.nl/
  */
+
 declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Model\Source;
@@ -14,6 +16,7 @@ class Fallback implements OptionSourceInterface
     public const DEFAULT = 1;
     public const RANDOM  = 2;
     public const PREFIX  = 3;
+
     /**
      * Return array of options as value-label pairs
      *
@@ -21,10 +24,10 @@ class Fallback implements OptionSourceInterface
      */
     public function toOptionArray()
     {
-        return array(
+        return [
             ['value' => self::DEFAULT, 'label' => 'Enter one default sessionId'],
             ['value' => self::RANDOM, 'label' => 'Completly random sessionId'],
             ['value' => self::PREFIX, 'label' => 'Enter prefix for random sessionId']
-        );
+        ];
     }
 }

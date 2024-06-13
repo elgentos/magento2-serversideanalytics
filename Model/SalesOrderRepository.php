@@ -1,10 +1,11 @@
 <?php
+
 /**
  * Copyright Elgentos BV. All rights reserved.
  * https://www.elgentos.nl/
  */
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Model;
 
@@ -13,7 +14,7 @@ use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder as SalesOrderRes
 class SalesOrderRepository
 {
     public function __construct(
-        private readonly SalesOrderResource $resource,
+        protected readonly SalesOrderResource $resource,
     ) {
     }
 

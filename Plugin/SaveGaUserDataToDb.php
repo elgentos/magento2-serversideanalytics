@@ -10,10 +10,9 @@ declare(strict_types=1);
 namespace Elgentos\ServerSideAnalytics\Plugin;
 
 use Elgentos\ServerSideAnalytics\Config\ModuleConfiguration;
-use Elgentos\ServerSideAnalytics\Logger\Logger;
 use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\Collection;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
-use Elgentos\ServerSideAnalytics\Model\SalesOrderFactory;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
 use Elgentos\ServerSideAnalytics\Model\Source\Fallback;
 use Magento\Framework\Stdlib\CookieManagerInterface;
@@ -22,13 +21,11 @@ use Magento\Quote\Api\CartRepositoryInterface;
 class SaveGaUserDataToDb
 {
     public function __construct(
-        private readonly ModuleConfiguration $moduleConfiguration,
-        private readonly Logger $logger,
-        private readonly SalesOrderFactory $elgentosSalesOrderFactory,
-        private readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
-        private readonly SalesOrderRepository $elgentosSalesOrderRepository,
-        private readonly CookieManagerInterface $cookieManager,
-        private readonly GAClient $gaclient
+        protected readonly ModuleConfiguration $moduleConfiguration,
+        protected readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
+        protected readonly SalesOrderRepository $elgentosSalesOrderRepository,
+        protected readonly CookieManagerInterface $cookieManager,
+        protected readonly GAClient $gaclient
     ) {
     }
 
@@ -63,7 +60,8 @@ class SaveGaUserDataToDb
         }
     }
 
-    protected function getGaUserId() {
+    protected function getGaUserId()
+    {
         $gaUserId = $this->getUserIdFromCookie();
 
         if ($gaUserId === null) {
@@ -76,7 +74,8 @@ class SaveGaUserDataToDb
         return $gaUserId;
     }
 
-    protected  function getGaSessionId() {
+    protected function getGaSessionId()
+    {
 
         $gaSessionId = $this->getSessionIdFromCookie();
 
@@ -100,7 +99,6 @@ class SaveGaUserDataToDb
         return random_int((int)1E5, (int)1E9);
     }
 
-
     /**
      * Try to get the Google Analytics User ID from the cookie
      *
@@ -110,7 +108,7 @@ class SaveGaUserDataToDb
     {
         $gaCookie = explode('.', $this->cookieManager->getCookie('_ga') ?? '');
 
-        if (empty($gaCookie) || count($gaCookie) < 4) {
+        if (count($gaCookie) < 4) {
             return null;
         }
 
@@ -125,7 +123,8 @@ class SaveGaUserDataToDb
             return null;
         }
 
-        if ($gaCookieVersion != 'GA' . $this->gaclient->getVersion()
+        if (
+            $gaCookieVersion != 'GA' . $this->gaclient->getVersion()
         ) {
             $this->gaclient->createLog('Google Analytics cookie version differs from Measurement Protocol API version; please upgrade.');
             return null;
@@ -141,7 +140,7 @@ class SaveGaUserDataToDb
 
         $gaCookie = explode('.', $this->cookieManager->getCookie('_ga_' . $gaMeasurementId) ?? '');
 
-        if (empty($gaCookie) || count($gaCookie) < 9) {
+        if (count($gaCookie) < 9) {
             return null;
         }
 

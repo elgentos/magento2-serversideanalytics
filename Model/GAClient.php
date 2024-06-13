@@ -1,8 +1,10 @@
 <?php
+
 /**
  * Copyright Elgentos BV. All rights reserved.
  * https://www.elgentos.nl/
  */
+
 declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Model;
@@ -19,40 +21,24 @@ use Elgentos\ServerSideAnalytics\Logger\Logger;
 
 class GAClient
 {
+    protected ?Service $service;
 
-    /**
-     * @var Service
-     */
-    protected $service;
+    protected ?BaseRequest $request;
 
-    /**
-     * @var BaseRequest
-     */
-    protected $request;
-
-    /**
-     * @var PurchaseEvent
-     */
-    protected $purchaseEvent;
+    protected ?PurchaseEvent $purchaseEvent;
 
     /* Google Analytics Measurement Protocol API version */
-    protected $version = '1';
+    protected string $version = '1';
 
     /* Count how many products are added to the Analytics object */
-    protected $productCounter = 0;
+    protected int $productCounter = 0;
 
     public function __construct(
         protected ModuleConfiguration $moduleConfiguration,
         protected Logger $logger
-    )
-    {
+    ) {
     }
 
-    /**
-     * @param DataObject $data
-     *
-     * @throws Exception
-     */
     public function setTrackingData(DataObject $data): void
     {
         if (!$data->getClientId()) {
@@ -61,7 +47,7 @@ class GAClient
 
         $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'
 
-        $this->getRequest()->setTimestampMicros((int)$this->getMicroTime());
+        $this->getRequest()->setTimestampMicros($this->getMicroTime());
 
         if ($data->getUserId()) {
             $this->getRequest()->setUserId($data->getUserId()); // magento customer_id
@@ -70,7 +56,7 @@ class GAClient
 
     public function getRequest()
     {
-        if ($this->request) {
+        if (isset($this->request)) {
             return $this->request;
         }
 
@@ -79,14 +65,13 @@ class GAClient
         return $this->request;
     }
 
-    public function getMicroTime(): string
+    public function getMicroTime(): int
     {
-        $datetime = new DateTime();
-
-        return $datetime->format('Uu');
+        return (int)(new DateTime())
+            ->format('Uu');
     }
 
-    public function setTransactionData($data)
+    public function setTransactionData(DataObject $data)
     {
         foreach ($data->getData() as $key => $param) {
             $this->getPurchaseEvent()->setParamValue($key, $param);
@@ -97,7 +82,7 @@ class GAClient
 
     public function getPurchaseEvent()
     {
-        if ($this->purchaseEvent) {
+        if (isset($this->purchaseEvent)) {
             return $this->purchaseEvent;
         }
 
@@ -106,14 +91,17 @@ class GAClient
         return $this->purchaseEvent;
     }
 
-    public function addProducts($products)
+    /**
+     * @param DataObject[] $products
+     */
+    public function addProducts(array $products): void
     {
         foreach ($products as $product) {
             $this->addProduct($product);
         }
     }
 
-    public function addProduct($data)
+    public function addProduct(DataObject $data)
     {
         $this->productCounter++;
 
