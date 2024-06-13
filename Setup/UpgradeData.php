@@ -5,6 +5,8 @@
  * https://www.elgentos.nl/
  */
 
+// phpcs:ignoreFile
+
 declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Setup;

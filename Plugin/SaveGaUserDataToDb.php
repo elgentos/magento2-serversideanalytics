@@ -87,11 +87,11 @@ class SaveGaUserDataToDb
             return $gaSessionId;
         }
 
-        if ($this->moduleConfiguration->getFallbackSessionIdGenerationMode() === Fallback::DEFAULT) {
+        if ($this->moduleConfiguration->getFallbackGenerationMode() === Fallback::DEFAULT) {
             return $this->moduleConfiguration->getFallbackSessionId() ?? '9999999999999';
         }
 
-        if ($this->moduleConfiguration->getFallbackSessionIdGenerationMode() === Fallback::PREFIX) {
+        if ($this->moduleConfiguration->getFallbackGenerationMode() === Fallback::PREFIX) {
             $prefix = $this->moduleConfiguration->getFallbackSessionIdPrefix();
             if (!$prefix) {
                 $prefix = '9999';

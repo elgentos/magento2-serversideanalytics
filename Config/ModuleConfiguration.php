@@ -11,16 +11,16 @@ namespace Elgentos\ServerSideAnalytics\Config;
 
 class ModuleConfiguration extends AbstractConfigProvider
 {
-    const XPATH_ENABLED                             = 'google/serverside_analytics/ga_enabled';
-    const XPATH_API_SECRET                          = 'google/serverside_analytics/api_secret';
-    const XPATH_MEASUREMENT_ID                      = 'google/serverside_analytics/measurement_id';
-    const XPATH_CURRENCY_SOURCE                     = 'google/serverside_analytics/currency_source';
-    const XPATH_DEBUG_MODE                          = 'google/serverside_analytics/debug_mode';
-    const XPATH_ENABLE_LOGGING                      = 'google/serverside_analytics/enable_logging';
-    const XPATH_FALLBACK_SESSION_ID_GENERATION_MODE = 'google/serverside_analytics/fallback_session_id_generation_mode';
-    const XPATH_FALLBACK_SESSION_ID_PREFIX          = 'google/serverside_analytics/fallback_session_id_prefix';
-    const XPATH_FALLBACK_SESSION_ID                 = 'google/serverside_analytics/fallback_session_id';
-    const XPATH_TAX_DISPLAY_TYPE                    = 'tax/display/type';
+    public const XPATH_ENABLED                    = 'google/serverside_analytics/ga_enabled';
+    public const XPATH_API_SECRET                 = 'google/serverside_analytics/api_secret';
+    public const XPATH_MEASUREMENT_ID             = 'google/serverside_analytics/measurement_id';
+    public const XPATH_CURRENCY_SOURCE            = 'google/serverside_analytics/currency_source';
+    public const XPATH_DEBUG_MODE                 = 'google/serverside_analytics/debug_mode';
+    public const XPATH_ENABLE_LOGGING             = 'google/serverside_analytics/enable_logging';
+    public const XPATH_FALLBACK_GENERATION_MODE   = 'google/serverside_analytics/fallback_session_id_generation_mode';
+    public const XPATH_FALLBACK_SESSION_ID_PREFIX = 'google/serverside_analytics/fallback_session_id_prefix';
+    public const XPATH_FALLBACK_SESSION_ID        = 'google/serverside_analytics/fallback_session_id';
+    public const XPATH_TAX_DISPLAY_TYPE           = 'tax/display/type';
 
     public function isDebugMode(int|null|string $store = null): bool
     {
@@ -62,9 +62,9 @@ class ModuleConfiguration extends AbstractConfigProvider
         return $this->getConfigAsInt(static::XPATH_TAX_DISPLAY_TYPE, $store);
     }
 
-    public function getFallbackSessionIdGenerationMode(int|null|string $store = null): ?int
+    public function getFallbackGenerationMode(int|null|string $store = null): ?int
     {
-        return $this->getConfigAsInt(static::XPATH_FALLBACK_SESSION_ID_GENERATION_MODE, $store);
+        return $this->getConfigAsInt(static::XPATH_FALLBACK_GENERATION_MODE, $store);
     }
 
     public function getFallbackSessionIdPrefix(int|null|string $store = null): ?string
