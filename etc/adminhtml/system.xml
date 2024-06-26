@@ -3,72 +3,107 @@
     <system>
         <section id="google" translate="label" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1">
             <group id="serverside_analytics" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>ServerSide Google Analytics Options</label>
-                <field id="ga_enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Google Analytics 4 Enable</label>
+                <label>ServerSide Google Analytics</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="api_secret" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>API Secret</label>
+                <group id="general" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>General</label>
                     <depends>
-                        <field id="google/serverside_analytics/ga_enabled">1</field>
+                        <field id="google/serverside_analytics/enable">1</field>
                     </depends>
-                </field>
-                <field id="measurement_id" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Google Analytics Measurement Id</label>
-                    <comment><![CDATA[For example, G-12384573]]></comment>
-                    <depends>
-                        <field id="google/serverside_analytics/ga_enabled">1</field>
-                    </depends>
-                </field>
-                <field id="fallback_session_id_generation_mode" translate="label" type="select" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Fallback Session id Mode</label>
-                    <source_model>Elgentos\ServerSideAnalytics\Model\Source\Fallback</source_model>
-                    <comment><![CDATA[Select the session id generation mode when no session id is available due to adblockers]]></comment>
-                    <depends>
-                        <field id="google/serverside_analytics/ga_enabled">1</field>
-                    </depends>
-                </field>
-                <field id="fallback_session_id" translate="label" type="text" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Fallback session id</label>
-                    <comment><![CDATA[The default fallback session id. One session id for all missing]]></comment>
-                    <depends>
-                        <field id="google/serverside_analytics/fallback_session_id_generation_mode">1</field>
-                    </depends>
-                </field>
-                <field id="fallback_session_id_prefix" translate="label" type="text" sortOrder="17" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Fallback Session Id Prefix</label>
-                    <comment><![CDATA[Prefix for session id so they are unique with a default prefix. Limit this on 4 numbers]]></comment>
-                    <depends>
-                        <field id="google/serverside_analytics/fallback_session_id_generation_mode">3</field>
-                    </depends>
-                </field>
-                <field id="trigger_on_event" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Triggering event</label>
-                    <source_model>Elgentos\ServerSideAnalytics\Model\Source\TriggerEvent</source_model>
+                    <field id="api_secret" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>API Secret</label>
+                    </field>
+                    <field id="measurement_id" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Google Analytics Measurement Id</label>
+                        <comment><![CDATA[For example, G-12384573]]></comment>
+                    </field>
+                    <field id="currency_source" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Currency source</label>
+                        <source_model>Elgentos\ServerSideAnalytics\Model\Source\CurrencySource</source_model>
+                        <comment><![CDATA[This should be 'Currency of the order' in most cases. If however you want the 'global' currency code to be send with the order-value choose 'Default store currency'.]]></comment>
+
+                    </field>
+                </group>
+                <group id="trigger_on" translate="label" type="text" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Trigger on</label>
                     <comment><![CDATA[At what point in the order's life do we want Google Analytics to know about it?]]></comment>
                     <depends>
-                        <field id="google/serverside_analytics/ga_enabled">1</field>
+                        <field id="google/serverside_analytics/enable">1</field>
                     </depends>
-                </field>
-                <field id="currency_source" translate="label" type="select" sortOrder="19" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Currency source</label>
-                    <source_model>Elgentos\ServerSideAnalytics\Model\Source\CurrencySource</source_model>
-                    <comment><![CDATA[This should be 'Currency of the order' in most cases. If however you want the 'global' currency code to be send with the order-value choose 'Default store currency'.]]></comment>
+                    <field id="mode" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Mode</label>
+                        <source_model>Elgentos\ServerSideAnalytics\Model\Source\TriggerMode</source_model>
+                        <comment><![CDATA[At what point in the order's life do we want Google Analytics to know about it?]]></comment>
+                    </field>
+                    <field id="on_placed_methods" translate="label" type="multiselect" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Right after placing the order</label>
+                        <source_model>Elgentos\ServerSideAnalytics\Model\Source\PaymentMethods</source_model>
+                        <comment><![CDATA[Select the payment methods which should notify Google Analytics when a order is placed (immediately after checkout)]]></comment>
+                        <depends>
+                            <field id="google/serverside_analytics/trigger_on/mode">90</field>
+                        </depends>
+                    </field>
+                    <field id="on_payed_methods" translate="label" type="multiselect" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>When the order is payed</label>
+                        <source_model>Elgentos\ServerSideAnalytics\Model\Source\PaymentMethods</source_model>
+                        <comment><![CDATA[Select the payment methods which should notify Google Analytics when a order is fully payed]]></comment>
+                        <depends>
+                            <field id="google/serverside_analytics/trigger_on/mode">90</field>
+                        </depends>
+                    </field>
+<!--                    <field id="on_invoice_methods" translate="label" type="multiselect" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">-->
+<!--                        <label>When the order has a invoice</label>-->
+<!--                        <source_model>Elgentos\ServerSideAnalytics\Model\Source\PaymentMethods</source_model>-->
+<!--                        <comment><![CDATA[Select the payment methods which should notify Google Analytics when a order has a invoice created for it]]></comment>-->
+<!--                        <depends>-->
+<!--                            <field id="google/serverside_analytics/trigger_on/mode">90</field>-->
+<!--                        </depends>-->
+<!--                    </field>-->
+                </group>
+                <group id="fallback_session_id" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Fallback Session id</label>
                     <depends>
-                        <field id="google/serverside_analytics/ga_enabled">1</field>
+                        <field id="google/serverside_analytics/enable">1</field>
                     </depends>
-                </field>
-                <field id="debug_mode" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Enable Debug Mode</label>
-                    <comment><![CDATA[<strong>Warning:</strong> When this is enabled, transactions will not be pushed to Google Analytics, only debugged]]></comment>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="enable_logging" translate="label" type="select" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Enable Logging</label>
-                    <comment><![CDATA[When enabled, this will log the requests done to Google Analytics]]></comment>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
+                    <field id="mode" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Mode</label>
+                        <source_model>Elgentos\ServerSideAnalytics\Model\Source\Fallback</source_model>
+                        <comment><![CDATA[Select the session id generation mode when no session id is available due to adblockers]]></comment>
+                    </field>
+                    <field id="id" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Fallback ID</label>
+                        <comment><![CDATA[The default fallback session id. One session id for all missing]]></comment>
+                        <depends>
+                            <field id="google/serverside_analytics/fallback_session_id/mode">1</field>
+                        </depends>
+                    </field>
+                    <field id="prefix" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Prefix</label>
+                        <comment><![CDATA[Prefix for session id so they are unique with a default prefix. Limit this on 4 numbers]]></comment>
+                        <depends>
+                            <field id="google/serverside_analytics/fallback_session_id/mode">3</field>
+                        </depends>
+                    </field>
+                </group>
+                <group id="developer" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Developers</label>
+                    <depends>
+                        <field id="google/serverside_analytics/enable">1</field>
+                    </depends>
+                    <field id="debug" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Enable Debug Mode</label>
+                        <comment><![CDATA[<strong>Warning:</strong> When this is enabled, transactions will not be pushed to Google Analytics, only debugged]]></comment>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="logging" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                        <label>Enable Logging</label>
+                        <comment><![CDATA[When enabled, this will log the requests done to Google Analytics]]></comment>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                </group>
             </group>
         </section>
     </system>

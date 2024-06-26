@@ -23,7 +23,11 @@ abstract class AbstractConfigProvider
 
     public function isSetFlag(string $xpath, int|null|string $store = null): bool
     {
-        return $this->scopeConfig->isSetFlag($xpath, $store);
+        return $this->scopeConfig->isSetFlag(
+            $xpath,
+            ScopeInterface::SCOPE_STORE,
+            scopeCode: $store
+        );
     }
 
     protected function getConfig(string $xpath, int|null|string $store = null): mixed

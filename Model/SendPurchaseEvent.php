@@ -7,30 +7,22 @@
 
 declare(strict_types=1);
 
-namespace Elgentos\ServerSideAnalytics\Observer;
+namespace Elgentos\ServerSideAnalytics\Model;
 
 use Elgentos\ServerSideAnalytics\Config\ModuleConfiguration;
 use Elgentos\ServerSideAnalytics\Logger\Logger;
-use Elgentos\ServerSideAnalytics\Model\GAClient;
-use Elgentos\ServerSideAnalytics\Model\GAClientFactory;
-use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\Collection;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
-use Elgentos\ServerSideAnalytics\Model\SalesOrder;
-use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
 use Elgentos\ServerSideAnalytics\Model\Source\CurrencySource;
 use Magento\Framework\DataObject;
 use Magento\Framework\Event\ManagerInterface;
-use Magento\Framework\Event\Observer;
-use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\Order\Item;
-use Magento\Sales\Model\Order\Payment;
 use Magento\Store\Model\App\Emulation;
 use Magento\Tax\Model\Config;
 
-class SendPurchaseEvent implements ObserverInterface
+class SendPurchaseEvent
 {
     public function __construct(
         protected readonly ModuleConfiguration $moduleConfiguration,
@@ -44,22 +36,17 @@ class SendPurchaseEvent implements ObserverInterface
     ) {
     }
 
-    public function execute(Observer $observer)
+    public function execute(Order $order, string $eventName = 'unknown')
     {
-        /** @var Payment $payment */
-        $payment = $observer->getPayment();
-
         /** @var Invoice $invoice */
-        $invoice = $observer->getInvoice();
+        $invoice = $order->getInvoiceCollection()->getFirstItem();
 
-        /** @var Order $order */
-        $order        = $payment->getOrder();
         $orderStoreId = $order->getStoreId();
 
         $gaUserDatabaseId = $order->getId();
 
         if (!$gaUserDatabaseId) {
-            $gaUserDatabaseId = $payment->getOrder()->getQuoteId();
+            $gaUserDatabaseId = $order->getQuoteId();
         }
 
         if (!$gaUserDatabaseId) {
@@ -84,8 +71,31 @@ class SendPurchaseEvent implements ObserverInterface
 
         $gaclient = $this->GAClientFactory->create();
 
+        if ($elgentosSalesOrder->getData('send_at') !== null) {
+            $this->emulation->stopEnvironmentEmulation();
+            if ($this->moduleConfiguration->isLogging()) {
+                $gaclient->createLog(
+                    'The purchase event for order #' .
+                    $order->getIncrementId() . ' was send already by trigger ' .
+                    ($elgentosSalesOrder->getData('trigger') ?? '') . '.',
+                    [
+                        'eventName' => $eventName,
+                        ...$elgentosSalesOrder->getData()
+                    ]
+                );
+            }
+
+            return;
+        }
+
         if ($this->moduleConfiguration->isLogging()) {
-            $gaclient->createLog('Got payment Pay event for Ga UserID: ' . $elgentosSalesOrder->getGaUserId(), []);
+            $gaclient->createLog(
+                'Got ' . $eventName . ' event for Ga UserID: ' . $elgentosSalesOrder->getGaUserId(),
+                [
+                    'eventName' => $eventName,
+                    ...$elgentosSalesOrder->getData()
+                ]
+            );
         }
 
         $trackingDataObject = new DataObject(
@@ -96,15 +106,18 @@ class SendPurchaseEvent implements ObserverInterface
             ]
         );
 
-        $userId = $payment->getOrder()->getCustomerId();
+        $userId = $order->getCustomerId();
         if ($userId) {
             $trackingDataObject->setData('user_id', $userId);
         }
 
-        $transactionDataObject = $this->getTransactionDataObject($order, $invoice, $elgentosSalesOrder);
-
-        $products = $this->collectProducts($invoice);
+        $transactionDataObject = $this->getTransactionDataObject($order, $elgentosSalesOrder);
+        $products = $this->collectProducts($order);
         $this->sendPurchaseEvent($gaclient, $transactionDataObject, $products, $trackingDataObject);
+
+        $elgentosSalesOrder->setData('trigger', $eventName);
+        $elgentosSalesOrder->setData('send_at', date('Y-m-d H:i:s'));
+        $this->elgentosSalesOrderRepository->save($elgentosSalesOrder);
 
         $this->emulation->stopEnvironmentEmulation();
     }
@@ -113,7 +126,7 @@ class SendPurchaseEvent implements ObserverInterface
     {
         $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
         /** @var SalesOrder $elgentosSalesOrder */
-        $elgentosSalesOrder           = $elgentosSalesOrderCollection
+        $elgentosSalesOrder = $elgentosSalesOrderCollection
             ->addFieldToFilter(
                 ['quote_id', 'order_id'],
                 [
@@ -137,23 +150,21 @@ class SendPurchaseEvent implements ObserverInterface
     /**
      * @return DataObject[]
      */
-    protected function collectProducts(Invoice $invoice): array
+    protected function collectProducts(Order $order): array
     {
         $products = [];
 
         /** @var Invoice\Item $item */
-        foreach ($invoice->getAllItems() as $item) {
-            if (!$item->isDeleted() && !$item->getOrderItem()->getParentItemId()) {
-                $orderItem = $item->getOrderItem();
-
+        foreach ($order->getAllItems() as $item) {
+            if (!$item->isDeleted() && !$item->getParentItemId()) {
                 $product = new DataObject(
                     [
                         'sku' => $item->getSku(),
                         'name' => $item->getName(),
-                        'price' => $this->getPaidProductPrice($item->getOrderItem()),
-                        'quantity' => $orderItem->getQtyOrdered(),
+                        'price' => $this->getPaidProductPrice($item),
+                        'quantity' => $item->getQtyOrdered(),
                         'position' => $item->getId(),
-                        'item_brand' => $orderItem->getProduct()?->getAttributeText('manufacturer')
+                        'item_brand' => $item->getProduct()?->getAttributeText('manufacturer')
                     ]
                 );
 
@@ -179,10 +190,10 @@ class SendPurchaseEvent implements ObserverInterface
             : $orderItem->getBasePriceInclTax();
     }
 
-    public function getTransactionDataObject(Order $order, Invoice $invoice, $elgentosSalesOrder): DataObject
+    public function getTransactionDataObject(Order $order, $elgentosSalesOrder): DataObject
     {
         $currency = $this->moduleConfiguration->getCurrencySource() === CurrencySource::GLOBAL ?
-            $invoice->getGlobalCurrencyCode() :
+            $order->getGlobalCurrencyCode() :
             $order->getBaseCurrencyCode();
 
         $transactionDataObject = new DataObject(
@@ -190,9 +201,9 @@ class SendPurchaseEvent implements ObserverInterface
                 'transaction_id' => $order->getIncrementId(),
                 'affiliation' => $order->getStoreName(),
                 'currency' => $currency,
-                'value' => $invoice->getBaseGrandTotal(),
-                'tax' => $invoice->getBaseTaxAmount(),
-                'shipping' => ($this->getPaidShippingCosts($invoice) ?? 0),
+                'value' => $order->getBaseGrandTotal(),
+                'tax' => $order->getBaseTaxAmount(),
+                'shipping' => ($this->getPaidShippingCosts($order) ?? 0),
                 'coupon_code' => $order->getCouponCode(),
                 'session_id' => $elgentosSalesOrder->getGaSessionId()
             ]
@@ -206,11 +217,11 @@ class SendPurchaseEvent implements ObserverInterface
         return $transactionDataObject;
     }
 
-    private function getPaidShippingCosts(Invoice $invoice): ?float
+    private function getPaidShippingCosts(Order $order): ?float
     {
         return $this->moduleConfiguration->getTaxDisplayType() == Config::DISPLAY_TYPE_EXCLUDING_TAX
-            ? $invoice->getBaseShippingAmount()
-            : $invoice->getBaseShippingInclTax();
+            ? $order->getBaseShippingAmount()
+            : $order->getBaseShippingInclTax();
     }
 
     public function sendPurchaseEvent(

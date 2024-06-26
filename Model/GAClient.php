@@ -17,7 +17,6 @@ use DateTime;
 use Elgentos\ServerSideAnalytics\Config\ModuleConfiguration;
 use Elgentos\ServerSideAnalytics\Exception\TrackingDataNotValigException;
 use Elgentos\ServerSideAnalytics\Logger\Logger;
-use Exception;
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\LocalizedException;
 
@@ -108,9 +107,9 @@ class GAClient
         $itemParameter = new ItemParameter($data->getData());
         $itemParameter->setItemId($data->getSku())
             ->setItemName($data->getName())
-            ->setIndex($data->getPosition())
-            ->setPrice($data->getPrice())
-            ->setQuantity($data->getQuantity());
+            ->setIndex((float)$data->getPosition())
+            ->setPrice((float)$data->getPrice())
+            ->setQuantity((float)$data->getQuantity());
 
         $this->getPurchaseEvent()->addItem($itemParameter);
     }
@@ -144,7 +143,7 @@ class GAClient
 
     public function getService()
     {
-        if ($this->service) {
+        if (isset($this->service)) {
             return $this->service;
         }
 

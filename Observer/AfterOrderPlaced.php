@@ -14,16 +14,19 @@ use Elgentos\ServerSideAnalytics\Model\GAClient;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\Collection;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
+use Elgentos\ServerSideAnalytics\Model\SendPurchaseEvent;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Sales\Model\Order\Payment;
 
-class SaveOrderIdToGaUserData implements ObserverInterface
+class AfterOrderPlaced implements ObserverInterface
 {
     public function __construct(
         protected readonly ModuleConfiguration $moduleConfiguration,
         protected readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
         protected readonly SalesOrderRepository $elgentosSalesOrderRepository,
-        protected readonly GAClient $gaclient
+        protected readonly GAClient $gaclient,
+        protected readonly SendPurchaseEvent $sendPurchaseEvent,
     ) {
     }
 
@@ -47,7 +50,7 @@ class SaveOrderIdToGaUserData implements ObserverInterface
 
         /** @var Collection $elgentosSalesOrderCollection */
         $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
-        $elgentosSalesOrderData = $elgentosSalesOrderCollection
+        $elgentosSalesOrderData       = $elgentosSalesOrderCollection
             ->addFieldToFilter('quote_id', $quote->getId())
             ->getFirstItem();
 
@@ -61,6 +64,14 @@ class SaveOrderIdToGaUserData implements ObserverInterface
             $this->elgentosSalesOrderRepository->save($elgentosSalesOrderData);
         } catch (\Exception $exception) {
             $this->gaclient->createLog($exception->getMessage());
+        }
+
+        /** @var Payment $payment */
+        $payment = $order->getPayment();
+        $method  = $payment->getMethodInstance();
+
+        if ($this->moduleConfiguration->shouldTriggerOnPlaced(paymentMethodCode: $method->getCode())) {
+            $this->sendPurchaseEvent->execute($order, 'AfterOrderPlaced');
         }
     }
 }

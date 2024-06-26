@@ -3,7 +3,9 @@
     <default>
         <google>
             <serverside_analytics>
-                <trigger_on_event>2</trigger_on_event>
+                <trigger_on>
+                    <mode>2</mode>
+                </trigger_on>
             </serverside_analytics>
         </google>
     </default>
