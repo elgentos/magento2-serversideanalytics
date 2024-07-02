@@ -1,14 +1,23 @@
 <?php
 
+/**
+ * Copyright Elgentos BV. All rights reserved.
+ * https://www.elgentos.nl/
+ */
+
+declare(strict_types=1);
+
 namespace Elgentos\ServerSideAnalytics\Model\Resolver;
 
+use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\Collection;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
+use Elgentos\ServerSideAnalytics\Model\SalesOrder;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
-use Exception;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Magento\GraphQl\Model\Query\Context;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface;
 
@@ -20,13 +29,8 @@ class GAResolver implements ResolverInterface
         protected CollectionFactory $elgentosSalesOrderCollectionFactory,
         protected SalesOrderRepository $elgentosSalesOrderRepository,
     ) {
-        $this->quoteRepository = $quoteRepository;
-        $this->maskedQuoteIdToQuoteId = $maskedQuoteIdToQuoteId;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function resolve(
         Field $field,
         $context,
@@ -36,6 +40,7 @@ class GAResolver implements ResolverInterface
     ) {
         $input = $args['input'];
 
+        /** @var Context $context */
         if (is_numeric($input['cartId']) && false === $context->getExtensionAttributes()->getIsCustomer()) {
             throw new GraphQlAuthorizationException(__('The current customer isn\'t authorized.'));
         }
@@ -44,8 +49,9 @@ class GAResolver implements ResolverInterface
             ? $input['cartId']
             : $this->maskedQuoteIdToQuoteId->execute($input['cartId']);
 
-        /** @var Collection $elgentosSalesOrder */
+        /** @var Collection $elgentosSalesOrderCollection */
         $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
+        /** @var SalesOrder $elgentosSalesOrder */
         $elgentosSalesOrder = $elgentosSalesOrderCollection
             ->addFieldToFilter('quote_id', $cartId)
             ->getFirstItem();

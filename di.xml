@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="Magento\Sales\Api\OrderRepositoryInterface">
-        <plugin name="elgentos_serversideanalytics_set_ga_user_data" type="Elgentos\ServerSideAnalytics\Plugin\SetGaUserDataToSalesOrder"/>
-        <plugin name="elgentos_serversideanalytics_add_ga_user_data_to_sales_order" type="Elgentos\ServerSideAnalytics\Plugin\AddGaUserDataToSalesOrder"/>
-    </type>
-</config>
