@@ -15,7 +15,7 @@ use Br33f\Ga4\MeasurementProtocol\Dto\Request\BaseRequest;
 use Br33f\Ga4\MeasurementProtocol\Service;
 use DateTime;
 use Elgentos\ServerSideAnalytics\Config\ModuleConfiguration;
-use Elgentos\ServerSideAnalytics\Exception\TrackingDataNotValigException;
+use Elgentos\ServerSideAnalytics\Exception\TrackingDataNotValidException;
 use Elgentos\ServerSideAnalytics\Logger\Logger;
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\LocalizedException;
@@ -41,7 +41,7 @@ class GAClient
     public function setTrackingData(DataObject $data): void
     {
         if (!$data->getClientId()) {
-            throw new TrackingDataNotValigException('No client ID is set for GA client.');
+            throw new TrackingDataNotValidException('No client ID is set for GA client.');
         }
 
         $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'

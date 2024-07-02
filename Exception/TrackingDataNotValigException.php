@@ -2,6 +2,6 @@
 
 namespace Elgentos\ServerSideAnalytics\Exception;
 
-class TrackingDataNotValigException extends \Exception
+class TrackingDataNotValidException extends \Exception
 {
 }
