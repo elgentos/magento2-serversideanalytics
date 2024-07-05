@@ -204,9 +204,9 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private function getPaidProductPrice(\Magento\Sales\Model\Order\Item $orderItem)
     {
-        return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_EXCLUDING_TAX
-            ? $orderItem->getBasePrice()
-            : $orderItem->getBasePriceInclTax();
+        return $this->scopeConfig->getValue('tax/display/type') === \Magento\Tax\Model\Config::DISPLAY_TYPE_INCLUDING_TAX
+            ? $orderItem->getBasePriceInclTax()
+            : $orderItem->getBasePrice();
     }
 
     /**
@@ -216,8 +216,8 @@ class SendPurchaseEvent implements ObserverInterface
      */
     private function getPaidShippingCosts(\Magento\Sales\Model\Order\Invoice $invoice)
     {
-        return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_EXCLUDING_TAX
-            ? $invoice->getBaseShippingAmount()
-            : $invoice->getBaseShippingInclTax();
+        return $this->scopeConfig->getValue('tax/display/type') == \Magento\Tax\Model\Config::DISPLAY_TYPE_INCLUDING_TAX
+            ? $invoice->getBaseShippingInclTax()
+            : $invoice->getBaseShippingAmount();
     }
 }
