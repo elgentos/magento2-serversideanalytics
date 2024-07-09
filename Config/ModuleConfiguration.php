@@ -13,7 +13,7 @@ use Elgentos\ServerSideAnalytics\Model\Source\TriggerMode;
 
 class ModuleConfiguration extends AbstractConfigProvider
 {
-    public const XPATH_ENABLED                    = 'google/serverside_analytics/enable';
+    public const XPATH_ENABLED                    = 'google/serverside_analytics/enabled';
     public const XPATH_API_SECRET                 = 'google/serverside_analytics/general/api_secret';
     public const XPATH_MEASUREMENT_ID             = 'google/serverside_analytics/general/measurement_id';
     public const XPATH_CURRENCY_SOURCE            = 'google/serverside_analytics/general/currency_source';
