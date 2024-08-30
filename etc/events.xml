@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="sales_order_payment_pay">
-        <observer name="elgentos_serversideanalytics_sales_order_payment_pay_observer" instance="Elgentos\ServerSideAnalytics\Observer\SendPurchaseEvent"/>
+        <observer name="elgentos_serversideanalytics_after_order_payed" instance="Elgentos\ServerSideAnalytics\Observer\AfterOrderPayed"/>
     </event>
 
     <event name="checkout_submit_all_after">
-        <observer name="elgentos_serversideanalytics_sales_order_submit_after" instance="Elgentos\ServerSideAnalytics\Observer\SaveOrderIdToGaUserData"/>
+        <observer name="elgentos_serversideanalytics_after_order_placed" instance="Elgentos\ServerSideAnalytics\Observer\AfterOrderPlaced"/>
     </event>
 
     <event name="test_event_for_serversideanalytics">
-        <observer name="elgentos_serversideanalytics_observer" instance="Elgentos\ServerSideAnalytics\Observer\SendPurchaseEvent"/>
+        <observer name="elgentos_serversideanalytics_test" instance="Elgentos\ServerSideAnalytics\Observer\AfterOrderPayed"/>
     </event>
 </config>

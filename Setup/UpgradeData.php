@@ -1,4 +1,12 @@
 <?php
+
+/**
+ * Copyright Elgentos BV. All rights reserved.
+ * https://www.elgentos.nl/
+ */
+
+// phpcs:ignoreFile
+
 declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Setup;
@@ -11,7 +19,6 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
 
 class UpgradeData implements UpgradeDataInterface
 {
-
     public function __construct(
         protected WriterInterface $configWriter
     ) {

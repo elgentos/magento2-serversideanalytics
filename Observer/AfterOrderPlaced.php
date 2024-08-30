@@ -9,31 +9,31 @@ declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Observer;
 
+use Elgentos\ServerSideAnalytics\Config\ModuleConfiguration;
 use Elgentos\ServerSideAnalytics\Model\GAClient;
+use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\Collection;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
-use Magento\Framework\App\Config\ScopeConfigInterface;
+use Elgentos\ServerSideAnalytics\Model\SendPurchaseEvent;
 use Magento\Framework\Event\Observer;
-use Magento\Store\Model\ScopeInterface;
-use Elgentos\ServerSideAnalytics\Logger\Logger;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Sales\Model\Order\Payment;
 
-class SaveOrderIdToGaUserData implements ObserverInterface
+class AfterOrderPlaced implements ObserverInterface
 {
     public function __construct(
-        private readonly ScopeConfigInterface $scopeConfig,
-        private readonly Logger $logger,
-        private readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
-        private readonly SalesOrderRepository $elgentosSalesOrderRepository,
-        private readonly GAClient $gaclient
+        protected readonly ModuleConfiguration $moduleConfiguration,
+        protected readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
+        protected readonly SalesOrderRepository $elgentosSalesOrderRepository,
+        protected readonly GAClient $gaclient,
+        protected readonly SendPurchaseEvent $sendPurchaseEvent,
     ) {
     }
 
     public function execute(Observer $observer)
     {
 
-        if (!$this->scopeConfig->getValue(GAClient::GOOGLE_ANALYTICS_SERVERSIDE_ENABLED, ScopeInterface::SCOPE_STORE)
-        ) {
+        if (!$this->moduleConfiguration->isReadyForUse()) {
             return;
         }
 
@@ -50,11 +50,11 @@ class SaveOrderIdToGaUserData implements ObserverInterface
 
         /** @var Collection $elgentosSalesOrderCollection */
         $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
-        $elgentosSalesOrderData = $elgentosSalesOrderCollection
+        $elgentosSalesOrderData       = $elgentosSalesOrderCollection
             ->addFieldToFilter('quote_id', $quote->getId())
             ->getFirstItem();
 
-        if (!$elgentosSalesOrderData) {
+        if (empty($elgentosSalesOrderData->getData('quote_id'))) {
             return;
         }
 
@@ -66,6 +66,12 @@ class SaveOrderIdToGaUserData implements ObserverInterface
             $this->gaclient->createLog($exception->getMessage());
         }
 
-        return;
+        /** @var Payment $payment */
+        $payment = $order->getPayment();
+        $method  = $payment->getMethodInstance();
+
+        if ($this->moduleConfiguration->shouldTriggerOnPlaced(paymentMethodCode: $method->getCode())) {
+            $this->sendPurchaseEvent->execute($order, 'AfterOrderPlaced');
+        }
     }
 }
