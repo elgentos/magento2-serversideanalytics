@@ -113,7 +113,7 @@ class SendPurchaseEvent
 
         $transactionDataObject = $this->getTransactionDataObject($order, $elgentosSalesOrder);
         $products = $this->collectProducts($order);
-        $this->sendPurchaseEvent($gaclient, $transactionDataObject, $products, $trackingDataObject);
+        $this->sendPurchaseEvent($gaclient, $transactionDataObject, $products, $trackingDataObject, $orderStoreId);
 
         $elgentosSalesOrder->setData('trigger', $eventName);
         $elgentosSalesOrder->setData('send_at', date('Y-m-d H:i:s'));
@@ -228,7 +228,8 @@ class SendPurchaseEvent
         GAClient $gaclient,
         DataObject $transactionDataObject,
         array $products,
-        DataObject $trackingDataObject
+        DataObject $trackingDataObject,
+        $orderStoreId
     ): void {
         try {
             $gaclient->setTransactionData($transactionDataObject);
@@ -248,7 +249,7 @@ class SendPurchaseEvent
 
             $gaclient->setTrackingData($trackingDataObject);
 
-            $gaclient->firePurchaseEvent();
+            $gaclient->firePurchaseEvent($this->moduleConfiguration->getApiSecret($orderStoreId), $this->moduleConfiguration->getMeasurementId($orderStoreId));
         } catch (\Exception $e) {
             $gaclient->createLog($e);
         }

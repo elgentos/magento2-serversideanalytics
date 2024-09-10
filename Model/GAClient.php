@@ -117,7 +117,7 @@ class GAClient
     /**
      * @throws LocalizedException
      */
-    public function firePurchaseEvent()
+    public function firePurchaseEvent($secret, $measurementId)
     {
         if (!$this->productCounter) {
             throw new LocalizedException(
@@ -135,22 +135,20 @@ class GAClient
 
         $send = $this->moduleConfiguration->isDebugMode() ? 'sendDebug' : 'send';
 
-        var_dump($this->moduleConfiguration->isDebugMode());die;
-
-        $response = $this->getService()->$send($baseRequest);
+        $response = $this->getService($secret, $measurementId)->$send($baseRequest);
 
         $this->createLog('Request: ', [$this->getRequest()->export()]);
         $this->createLog('Response: ', [$response->getStatusCode()]);
     }
 
-    public function getService()
+    public function getService($secret, $measurementId)
     {
         if (isset($this->service)) {
             return $this->service;
         }
 
-        $this->service = new Service($this->moduleConfiguration->getApiSecret());
-        $this->service->setMeasurementId($this->moduleConfiguration->getMeasurementId());
+        $this->service = new Service($secret);
+        $this->service->setMeasurementId($measurementId);
 
         return $this->service;
     }
