@@ -21,31 +21,31 @@ abstract class AbstractConfigProvider
     ) {
     }
 
-    public function isSetFlag(string $xpath, int|null|string $store = null): bool
+    public function isSetFlag(string $xpath, int|null|string $storeId = null): bool
     {
         return $this->scopeConfig->isSetFlag(
             $xpath,
             ScopeInterface::SCOPE_STORE,
-            scopeCode: $store
+            scopeCode: $storeId
         );
     }
 
-    protected function getConfig(string $xpath, int|null|string $store = null): mixed
+    protected function getConfig(string $xpath, int|null|string $storeId = null): mixed
     {
         return $this->scopeConfig->getValue(
             $xpath,
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
-    public function getConfigAsString(string $xpath, int|null|string $store = null): ?string
+    public function getConfigAsString(string $xpath, int|null|string $storeId = null): ?string
     {
-        return (string)$this->getConfig($xpath, $store);
+        return (string)$this->getConfig($xpath, $storeId);
     }
 
-    public function getConfigAsInt(string $xpath, int|null|string $store = null): int
+    public function getConfigAsInt(string $xpath, int|null|string $storeId = null): int
     {
-        return (int)$this->getConfig($xpath, $store);
+        return (int)$this->getConfig($xpath, $storeId);
     }
 }

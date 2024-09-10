@@ -33,7 +33,7 @@ class AfterOrderPayed implements ObserverInterface
         /** @var Order $order */
         $order = $payment->getOrder();
 
-        if ($this->moduleConfiguration->shouldTriggerOnPayment(paymentMethodCode: $method->getCode())) {
+        if ($this->moduleConfiguration->shouldTriggerOnPayment($order->getStoreId(), paymentMethodCode: $method->getCode())) {
             $this->sendPurchaseEvent->execute($order, 'AfterOrderPayed');
         }
     }

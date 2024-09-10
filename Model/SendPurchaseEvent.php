@@ -55,7 +55,7 @@ class SendPurchaseEvent
 
         $this->emulation->startEnvironmentEmulation($orderStoreId, 'adminhtml');
 
-        if (!$this->moduleConfiguration->isReadyForUse()) {
+        if (!$this->moduleConfiguration->isReadyForUse($orderStoreId)) {
             $this->emulation->stopEnvironmentEmulation();
 
             return;
@@ -73,7 +73,7 @@ class SendPurchaseEvent
 
         if ($elgentosSalesOrder->getData('send_at') !== null) {
             $this->emulation->stopEnvironmentEmulation();
-            if ($this->moduleConfiguration->isLogging()) {
+            if ($this->moduleConfiguration->isLogging($orderStoreId)) {
                 $gaclient->createLog(
                     'The purchase event for order #' .
                     $order->getIncrementId() . ' was send already by trigger ' .
@@ -88,7 +88,7 @@ class SendPurchaseEvent
             return;
         }
 
-        if ($this->moduleConfiguration->isLogging()) {
+        if ($this->moduleConfiguration->isLogging($orderStoreId)) {
             $gaclient->createLog(
                 'Got ' . $eventName . ' event for Ga UserID: ' . $elgentosSalesOrder->getGaUserId(),
                 [
@@ -185,14 +185,14 @@ class SendPurchaseEvent
      */
     private function getPaidProductPrice(Item $orderItem): float
     {
-        return $this->moduleConfiguration->getTaxDisplayType() === Config::DISPLAY_TYPE_EXCLUDING_TAX
+        return $this->moduleConfiguration->getTaxDisplayType($orderItem->getOrder()->getStoreId()) === Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $orderItem->getBasePrice()
             : $orderItem->getBasePriceInclTax();
     }
 
     public function getTransactionDataObject(Order $order, $elgentosSalesOrder): DataObject
     {
-        $currency = $this->moduleConfiguration->getCurrencySource() === CurrencySource::GLOBAL ?
+        $currency = $this->moduleConfiguration->getCurrencySource($order->getStoreId()) === CurrencySource::GLOBAL ?
             $order->getGlobalCurrencyCode() :
             $order->getBaseCurrencyCode();
 
@@ -219,7 +219,7 @@ class SendPurchaseEvent
 
     private function getPaidShippingCosts(Order $order): ?float
     {
-        return $this->moduleConfiguration->getTaxDisplayType() == Config::DISPLAY_TYPE_EXCLUDING_TAX
+        return $this->moduleConfiguration->getTaxDisplayType($order->getStoreId()) == Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $order->getBaseShippingAmount()
             : $order->getBaseShippingInclTax();
     }

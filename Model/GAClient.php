@@ -135,6 +135,8 @@ class GAClient
 
         $send = $this->moduleConfiguration->isDebugMode() ? 'sendDebug' : 'send';
 
+        var_dump($this->moduleConfiguration->isDebugMode());die;
+
         $response = $this->getService()->$send($baseRequest);
 
         $this->createLog('Request: ', [$this->getRequest()->export()]);
