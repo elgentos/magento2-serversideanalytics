@@ -113,7 +113,7 @@ class ModuleConfiguration extends AbstractConfigProvider
             return false;
         }
 
-        if (in_array($paymentMethodCode, $this->getPaymentMethodsForTrigger($store, $mode))) {
+        if (in_array($paymentMethodCode, $this->getPaymentMethodsForTrigger($mode, $store))) {
             return true;
         }
 
@@ -130,7 +130,7 @@ class ModuleConfiguration extends AbstractConfigProvider
         return null;
     }
 
-    public function getPaymentMethodsForTrigger(int|null|string $store = null, int $mode): array
+    public function getPaymentMethodsForTrigger(int $mode, int|null|string $store = null): array
     {
         switch ($mode) {
             case TriggerMode::PLACED:
