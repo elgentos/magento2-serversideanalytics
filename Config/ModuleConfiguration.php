@@ -64,15 +64,15 @@ class ModuleConfiguration extends AbstractConfigProvider
 
     public function shouldTriggerOnPayment(int|null|string $store = null, ?string $paymentMethodCode = null): ?bool
     {
-        return $this->shouldTriggerOn($store, TriggerMode::PAYED, $paymentMethodCode);
+        return $this->shouldTriggerOn(TriggerMode::PAYED, $store, $paymentMethodCode);
     }
 
     protected function shouldTriggerOn(
-        int|null|string $store = null,
         int $mode,
+        int|null|string $store = null,
         ?string $paymentMethodCode = null
     ): ?bool {
-        return $this->isReadyForUse() && $this->shouldTriggerOnMode($store, $mode, $paymentMethodCode);
+        return $this->isReadyForUse() && $this->shouldTriggerOnMode($mode, $store, $paymentMethodCode);
     }
 
     public function isReadyForUse(int|null|string $store = null): bool
@@ -96,8 +96,8 @@ class ModuleConfiguration extends AbstractConfigProvider
     }
 
     protected function shouldTriggerOnMode(
-        int|null|string $store = null,
         int $mode,
+        int|null|string $store = null,
         ?string $paymentMethodCode = null
     ): ?bool {
         $triggerMode = $this->getTriggerMode($store);
@@ -150,6 +150,6 @@ class ModuleConfiguration extends AbstractConfigProvider
 
     public function shouldTriggerOnPlaced(int|null|string $store = null, ?string $paymentMethodCode = null): ?bool
     {
-        return $this->shouldTriggerOn($store, TriggerMode::PLACED, $paymentMethodCode);
+        return $this->shouldTriggerOn(TriggerMode::PLACED, $store, $paymentMethodCode);
     }
 }
