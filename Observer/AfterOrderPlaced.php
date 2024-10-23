@@ -69,7 +69,12 @@ class AfterOrderPlaced implements ObserverInterface
         $payment = $order->getPayment();
         $method  = $payment->getMethodInstance();
 
-        if ($this->moduleConfiguration->shouldTriggerOnPayment($order->getStoreId(), paymentMethodCode: $method->getCode())) {
+        if (
+            $this->moduleConfiguration->shouldTriggerOnPlaced(
+                storeId: $order->getStoreId(),
+                paymentMethodCode: $method->getCode()
+            )
+        ) {
             $this->sendPurchaseEvent->execute($order, 'AfterOrderPlaced');
         }
     }

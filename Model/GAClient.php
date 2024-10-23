@@ -22,7 +22,8 @@ use Magento\Framework\Exception\LocalizedException;
 
 class GAClient
 {
-    protected ?Service $service;
+    /** @var Service[] */
+    protected array $service = [];
 
     protected ?BaseRequest $request;
 
@@ -117,7 +118,7 @@ class GAClient
     /**
      * @throws LocalizedException
      */
-    public function firePurchaseEvent($secret, $measurementId)
+    public function firePurchaseEvent(int|string|null $storeId)
     {
         if (!$this->productCounter) {
             throw new LocalizedException(
@@ -135,22 +136,31 @@ class GAClient
 
         $send = $this->moduleConfiguration->isDebugMode() ? 'sendDebug' : 'send';
 
-        $response = $this->getService($secret, $measurementId)->$send($baseRequest);
+        $service = $this->getService($storeId);
+        $response = $this->getService($storeId)->$send($baseRequest);
 
-        $this->createLog('Request: ', [$this->getRequest()->export()]);
+        $this->createLog(
+            "Request: ",
+            [
+            "storeId" => $storeId,
+            "measurementId" => $service->getMeasurementId(),
+            "body" => $this->getRequest()->export()
+            ]
+        );
         $this->createLog('Response: ', [$response->getStatusCode()]);
     }
 
-    public function getService($secret, $measurementId)
+    public function getService(int|string|null $storeId)
     {
-        if (isset($this->service)) {
-            return $this->service;
+        $storeId = $this->moduleConfiguration->ensureStoreId($storeId);
+        if (isset($this->service[$storeId])) {
+            return $this->service[$storeId];
         }
 
-        $this->service = new Service($secret);
-        $this->service->setMeasurementId($measurementId);
+        $this->service[$storeId] = new Service($this->moduleConfiguration->getApiSecret($storeId));
+        $this->service[$storeId]->setMeasurementId($this->moduleConfiguration->getMeasurementId($storeId));
 
-        return $this->service;
+        return $this->service[$storeId];
     }
 
     public function createLog($message, array $context = [])

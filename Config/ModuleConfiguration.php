@@ -27,6 +27,11 @@ class ModuleConfiguration extends AbstractConfigProvider
     public const XPATH_DEBUG_MODE                 = 'google/serverside_analytics/developer/debug';
     public const XPATH_ENABLE_LOGGING             = 'google/serverside_analytics/developer/logging';
 
+    public function ensureStoreId(int|null|string $storeId = null): int|string
+    {
+        return $this->storeManager->getStore($storeId)->getId();
+    }
+
     public function isDebugMode(int|null|string $storeId = null): bool
     {
         return $this->isSetFlag(static::XPATH_DEBUG_MODE, $storeId);
@@ -64,20 +69,30 @@ class ModuleConfiguration extends AbstractConfigProvider
 
     public function shouldTriggerOnPayment(int|null|string $storeId = null, ?string $paymentMethodCode = null): ?bool
     {
-        return $this->shouldTriggerOn(TriggerMode::PAYED, $storeId, $paymentMethodCode);
+        return $this->shouldTriggerOn(
+            mode: TriggerMode::PAYED,
+            storeId: $storeId,
+            paymentMethodCode: $paymentMethodCode
+        );
     }
 
     protected function shouldTriggerOn(
-        int|null $mode = null,
+        int $mode,
         int|null|string $storeId = null,
         ?string $paymentMethodCode = null
     ): ?bool {
-        return $this->isReadyForUse($storeId) && $this->shouldTriggerOnMode($mode, $storeId, $paymentMethodCode);
+        return $this->isReadyForUse($storeId) && $this->shouldTriggerOnMode(
+            mode: $mode,
+            storeId: $storeId,
+            paymentMethodCode: $paymentMethodCode
+        );
     }
 
     public function isReadyForUse(int|null|string $storeId = null): bool
     {
-        return $this->isEnabled($storeId) && !empty($this->getApiSecret($storeId)) && !empty($this->getMeasurementId($storeId));
+        return $this->isEnabled($storeId) &&
+            !empty($this->getApiSecret($storeId)) &&
+            !empty($this->getMeasurementId($storeId));
     }
 
     public function isEnabled(int|null|string $storeId = null): bool
@@ -96,7 +111,7 @@ class ModuleConfiguration extends AbstractConfigProvider
     }
 
     protected function shouldTriggerOnMode(
-        int|null $mode = null,
+        int $mode,
         int|null|string $storeId = null,
         ?string $paymentMethodCode = null
     ): ?bool {
@@ -113,7 +128,7 @@ class ModuleConfiguration extends AbstractConfigProvider
             return false;
         }
 
-        if (in_array($paymentMethodCode, $this->getPaymentMethodsForTrigger($mode, $storeId))) {
+        if (in_array($paymentMethodCode, $this->getPaymentMethodsForTrigger(mode: $mode, storeId: $storeId))) {
             return true;
         }
 
@@ -150,6 +165,10 @@ class ModuleConfiguration extends AbstractConfigProvider
 
     public function shouldTriggerOnPlaced(int|null|string $storeId = null, ?string $paymentMethodCode = null): ?bool
     {
-        return $this->shouldTriggerOn($storeId, TriggerMode::PLACED, $paymentMethodCode);
+        return $this->shouldTriggerOn(
+            mode: TriggerMode::PLACED,
+            storeId: $storeId,
+            paymentMethodCode: $paymentMethodCode
+        );
     }
 }

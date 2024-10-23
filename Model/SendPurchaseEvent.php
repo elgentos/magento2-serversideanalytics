@@ -185,7 +185,8 @@ class SendPurchaseEvent
      */
     private function getPaidProductPrice(Item $orderItem): float
     {
-        return $this->moduleConfiguration->getTaxDisplayType($orderItem->getOrder()->getStoreId()) === Config::DISPLAY_TYPE_EXCLUDING_TAX
+        return $this->moduleConfiguration
+            ->getTaxDisplayType($orderItem->getOrder()->getStoreId()) === Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $orderItem->getBasePrice()
             : $orderItem->getBasePriceInclTax();
     }
@@ -229,7 +230,7 @@ class SendPurchaseEvent
         DataObject $transactionDataObject,
         array $products,
         DataObject $trackingDataObject,
-        $orderStoreId
+        int|string|null $orderStoreId
     ): void {
         try {
             $gaclient->setTransactionData($transactionDataObject);
@@ -249,7 +250,7 @@ class SendPurchaseEvent
 
             $gaclient->setTrackingData($trackingDataObject);
 
-            $gaclient->firePurchaseEvent($this->moduleConfiguration->getApiSecret($orderStoreId), $this->moduleConfiguration->getMeasurementId($orderStoreId));
+            $gaclient->firePurchaseEvent($orderStoreId);
         } catch (\Exception $e) {
             $gaclient->createLog($e);
         }

@@ -78,7 +78,7 @@ class SaveGaUserDataToDb
         return $gaUserId;
     }
 
-    protected function getGaSessionId($storeId = null)
+    protected function getGaSessionId(int|null|string $storeId = null)
     {
 
         $gaSessionId = $this->getSessionIdFromCookie($storeId);
@@ -139,7 +139,7 @@ class SaveGaUserDataToDb
         return implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
     }
 
-    protected function getSessionIdFromCookie($storeId = null)
+    protected function getSessionIdFromCookie(int|null|string $storeId = null)
     {
         $gaMeasurementId = $this->moduleConfiguration->getMeasurementId($storeId);
         $gaMeasurementId = str_replace('G-', '', $gaMeasurementId);
