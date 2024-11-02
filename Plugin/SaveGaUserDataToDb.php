@@ -34,7 +34,7 @@ class SaveGaUserDataToDb
         $result,
         $quote
     ) {
-        if (!$this->moduleConfiguration->isReadyForUse()) {
+        if (!$this->moduleConfiguration->isReadyForUse($quote->getStoreId())) {
             $this->gaclient->createLog(
                 'Google ServerSideAnalytics is disabled or not configured check the ServerSideAnalytics configuration.'
             );
@@ -53,7 +53,7 @@ class SaveGaUserDataToDb
 
         $elgentosSalesOrderData->setData('quote_id', $quote->getId());
         $elgentosSalesOrderData->setData('ga_user_id', $this->getGaUserId());
-        $elgentosSalesOrderData->setData('ga_session_id', $this->getGaSessionId());
+        $elgentosSalesOrderData->setData('ga_session_id', $this->getGaSessionId($quote->getStoreId()));
 
         try {
             $this->elgentosSalesOrderRepository->save($elgentosSalesOrderData);
@@ -78,21 +78,21 @@ class SaveGaUserDataToDb
         return $gaUserId;
     }
 
-    protected function getGaSessionId()
+    protected function getGaSessionId(int|null|string $storeId = null)
     {
 
-        $gaSessionId = $this->getSessionIdFromCookie();
+        $gaSessionId = $this->getSessionIdFromCookie($storeId);
 
         if ($gaSessionId) {
             return $gaSessionId;
         }
 
-        if ($this->moduleConfiguration->getFallbackGenerationMode() === Fallback::DEFAULT) {
+        if ($this->moduleConfiguration->getFallbackGenerationMode($storeId) === Fallback::DEFAULT) {
             return $this->moduleConfiguration->getFallbackSessionId() ?? '9999999999999';
         }
 
-        if ($this->moduleConfiguration->getFallbackGenerationMode() === Fallback::PREFIX) {
-            $prefix = $this->moduleConfiguration->getFallbackSessionIdPrefix();
+        if ($this->moduleConfiguration->getFallbackGenerationMode($storeId) === Fallback::PREFIX) {
+            $prefix = $this->moduleConfiguration->getFallbackSessionIdPrefix($storeId);
             if (!$prefix) {
                 $prefix = '9999';
             }
@@ -139,9 +139,9 @@ class SaveGaUserDataToDb
         return implode('.', [$gaCookieUserId, $gaCookieTimestamp]);
     }
 
-    protected function getSessionIdFromCookie()
+    protected function getSessionIdFromCookie(int|null|string $storeId = null)
     {
-        $gaMeasurementId = $this->moduleConfiguration->getMeasurementId();
+        $gaMeasurementId = $this->moduleConfiguration->getMeasurementId($storeId);
         $gaMeasurementId = str_replace('G-', '', $gaMeasurementId);
 
         $gaCookie = explode(

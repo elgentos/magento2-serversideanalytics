@@ -32,11 +32,6 @@ class AfterOrderPlaced implements ObserverInterface
 
     public function execute(Observer $observer)
     {
-
-        if (!$this->moduleConfiguration->isReadyForUse()) {
-            return;
-        }
-
         $quote = $observer->getQuote();
         $order = $observer->getOrder();
 
@@ -45,6 +40,10 @@ class AfterOrderPlaced implements ObserverInterface
         }
 
         if (!$order) {
+            return;
+        }
+
+        if (!$this->moduleConfiguration->isReadyForUse($order->getStoreId())) {
             return;
         }
 
@@ -70,7 +69,12 @@ class AfterOrderPlaced implements ObserverInterface
         $payment = $order->getPayment();
         $method  = $payment->getMethodInstance();
 
-        if ($this->moduleConfiguration->shouldTriggerOnPlaced(paymentMethodCode: $method->getCode())) {
+        if (
+            $this->moduleConfiguration->shouldTriggerOnPlaced(
+                storeId: $order->getStoreId(),
+                paymentMethodCode: $method->getCode()
+            )
+        ) {
             $this->sendPurchaseEvent->execute($order, 'AfterOrderPlaced');
         }
     }
