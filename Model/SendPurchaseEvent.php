@@ -186,7 +186,8 @@ class SendPurchaseEvent
     private function getPaidProductPrice(Item $orderItem): float
     {
         return $this->moduleConfiguration
-            ->getTaxDisplayType($orderItem->getOrder()->getStoreId()) === Config::DISPLAY_TYPE_EXCLUDING_TAX
+            /** @phpstan-ignore-next-line */
+            ->getTaxDisplayType($orderItem->getOrder()?->getStoreId()) === Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $orderItem->getBasePrice()
             : $orderItem->getBasePriceInclTax();
     }
