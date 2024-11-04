@@ -55,7 +55,7 @@ class SendPurchaseEvent
 
         $this->emulation->startEnvironmentEmulation($orderStoreId, 'adminhtml');
 
-        if (!$this->moduleConfiguration->isReadyForUse($orderStoreId)) {
+        if (!$this->moduleConfiguration->isReadyForUse()) {
             $this->emulation->stopEnvironmentEmulation();
 
             return;
@@ -73,7 +73,7 @@ class SendPurchaseEvent
 
         if ($elgentosSalesOrder->getData('send_at') !== null) {
             $this->emulation->stopEnvironmentEmulation();
-            if ($this->moduleConfiguration->isLogging($orderStoreId)) {
+            if ($this->moduleConfiguration->isLogging()) {
                 $gaclient->createLog(
                     'The purchase event for order #' .
                     $order->getIncrementId() . ' was send already by trigger ' .
@@ -88,7 +88,7 @@ class SendPurchaseEvent
             return;
         }
 
-        if ($this->moduleConfiguration->isLogging($orderStoreId)) {
+        if ($this->moduleConfiguration->isLogging()) {
             $gaclient->createLog(
                 'Got ' . $eventName . ' event for Ga UserID: ' . $elgentosSalesOrder->getGaUserId(),
                 [
@@ -113,7 +113,7 @@ class SendPurchaseEvent
 
         $transactionDataObject = $this->getTransactionDataObject($order, $elgentosSalesOrder);
         $products = $this->collectProducts($order);
-        $this->sendPurchaseEvent($gaclient, $transactionDataObject, $products, $trackingDataObject, $orderStoreId);
+        $this->sendPurchaseEvent($gaclient, $transactionDataObject, $products, $trackingDataObject);
 
         $elgentosSalesOrder->setData('trigger', $eventName);
         $elgentosSalesOrder->setData('send_at', date('Y-m-d H:i:s'));
@@ -182,31 +182,33 @@ class SendPurchaseEvent
 
     /**
      * Get the actual price the customer also saw in it's cart.
-     * @phpstan-ignore-next-line
+     * @return float
      */
-    private function getPaidProductPrice(Item $orderItem): float|string
+    private function getPaidProductPrice(Item $orderItem): float
     {
-        return $this->moduleConfiguration
-            /** @phpstan-ignore-next-line */
-            ->getTaxDisplayType($orderItem->getOrder()?->getStoreId()) === Config::DISPLAY_TYPE_EXCLUDING_TAX
+        $price = $this->moduleConfiguration->getTaxDisplayType() === Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $orderItem->getBasePrice()
             : $orderItem->getBasePriceInclTax();
+
+        return (float)$price;
     }
 
     public function getTransactionDataObject(Order $order, $elgentosSalesOrder): DataObject
     {
-        $currency = $this->moduleConfiguration->getCurrencySource($order->getStoreId()) === CurrencySource::GLOBAL ?
+        $currency = $this->moduleConfiguration->getCurrencySource() === CurrencySource::GLOBAL ?
             $order->getGlobalCurrencyCode() :
             $order->getBaseCurrencyCode();
+
+        $shippingCosts = $this->getPaidShippingCosts($order);
 
         $transactionDataObject = new DataObject(
             [
                 'transaction_id' => $order->getIncrementId(),
                 'affiliation' => $order->getStoreName(),
                 'currency' => $currency,
-                'value' => $order->getBaseGrandTotal(),
-                'tax' => $order->getBaseTaxAmount(),
-                'shipping' => ($this->getPaidShippingCosts($order) ?? 0),
+                'value' => (float)$order->getBaseGrandTotal(),
+                'tax' => (float)$order->getBaseTaxAmount(),
+                'shipping' => $shippingCosts ?? 0.0, // Use 0.0 if null
                 'coupon_code' => $order->getCouponCode(),
                 'session_id' => $elgentosSalesOrder->getGaSessionId()
             ]
@@ -220,22 +222,26 @@ class SendPurchaseEvent
         return $transactionDataObject;
     }
 
-    /**
-     * @phpstan-ignore-next-line
-     */
-    private function getPaidShippingCosts(Order $order): null|float|string
+    private function getPaidShippingCosts(Order $order): ?float
     {
-        return $this->moduleConfiguration->getTaxDisplayType($order->getStoreId()) == Config::DISPLAY_TYPE_EXCLUDING_TAX
+        $shippingAmount = $this->moduleConfiguration->getTaxDisplayType() == Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $order->getBaseShippingAmount()
             : $order->getBaseShippingInclTax();
+
+        // null check
+        if ($shippingAmount === null) {
+            return null;
+        }
+
+        // string to float
+        return (float)$shippingAmount;
     }
 
     public function sendPurchaseEvent(
         GAClient $gaclient,
         DataObject $transactionDataObject,
         array $products,
-        DataObject $trackingDataObject,
-        int|string|null $orderStoreId
+        DataObject $trackingDataObject
     ): void {
         try {
             $gaclient->setTransactionData($transactionDataObject);
@@ -255,7 +261,7 @@ class SendPurchaseEvent
 
             $gaclient->setTrackingData($trackingDataObject);
 
-            $gaclient->firePurchaseEvent($orderStoreId);
+            $gaclient->firePurchaseEvent();
         } catch (\Exception $e) {
             $gaclient->createLog($e);
         }
