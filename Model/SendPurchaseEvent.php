@@ -182,11 +182,13 @@ class SendPurchaseEvent
 
     /**
      * Get the actual price the customer also saw in it's cart.
+     * @phpstan-ignore-next-line
      */
-    private function getPaidProductPrice(Item $orderItem): float
+    private function getPaidProductPrice(Item $orderItem): float|string
     {
         return $this->moduleConfiguration
-            ->getTaxDisplayType($orderItem->getOrder()->getStoreId()) === Config::DISPLAY_TYPE_EXCLUDING_TAX
+            /** @phpstan-ignore-next-line */
+            ->getTaxDisplayType($orderItem->getOrder()?->getStoreId()) === Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $orderItem->getBasePrice()
             : $orderItem->getBasePriceInclTax();
     }
@@ -218,7 +220,10 @@ class SendPurchaseEvent
         return $transactionDataObject;
     }
 
-    private function getPaidShippingCosts(Order $order): ?float
+    /**
+     * @phpstan-ignore-next-line
+     */
+    private function getPaidShippingCosts(Order $order): null|float|string
     {
         return $this->moduleConfiguration->getTaxDisplayType($order->getStoreId()) == Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $order->getBaseShippingAmount()
