@@ -182,15 +182,16 @@ class SendPurchaseEvent
 
     /**
      * Get the actual price the customer also saw in it's cart.
-     * @phpstan-ignore-next-line
+     * @return float
      */
-    private function getPaidProductPrice(Item $orderItem): float|string
+    private function getPaidProductPrice(Item $orderItem): float
     {
-        return $this->moduleConfiguration
-            /** @phpstan-ignore-next-line */
+        $price = $this->moduleConfiguration
             ->getTaxDisplayType($orderItem->getOrder()?->getStoreId()) === Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $orderItem->getBasePrice()
             : $orderItem->getBasePriceInclTax();
+
+        return (float)$price;
     }
 
     public function getTransactionDataObject(Order $order, $elgentosSalesOrder): DataObject
@@ -199,14 +200,16 @@ class SendPurchaseEvent
             $order->getGlobalCurrencyCode() :
             $order->getBaseCurrencyCode();
 
+        $shippingCosts = $this->getPaidShippingCosts($order);
+
         $transactionDataObject = new DataObject(
             [
                 'transaction_id' => $order->getIncrementId(),
                 'affiliation' => $order->getStoreName(),
                 'currency' => $currency,
-                'value' => $order->getBaseGrandTotal(),
-                'tax' => $order->getBaseTaxAmount(),
-                'shipping' => ($this->getPaidShippingCosts($order) ?? 0),
+                'value' => (float)$order->getBaseGrandTotal(),
+                'tax' => (float)$order->getBaseTaxAmount(),
+                'shipping' => $shippingCosts ?? 0.0, // Use 0.0 if null
                 'coupon_code' => $order->getCouponCode(),
                 'session_id' => $elgentosSalesOrder->getGaSessionId()
             ]
@@ -221,13 +224,20 @@ class SendPurchaseEvent
     }
 
     /**
-     * @phpstan-ignore-next-line
+     * Get shipping costs
+     * @return float|null
      */
-    private function getPaidShippingCosts(Order $order): null|float|string
+    private function getPaidShippingCosts(Order $order): ?float
     {
-        return $this->moduleConfiguration->getTaxDisplayType($order->getStoreId()) == Config::DISPLAY_TYPE_EXCLUDING_TAX
+        $shippingAmount = $this->moduleConfiguration->getTaxDisplayType($order->getStoreId()) == Config::DISPLAY_TYPE_EXCLUDING_TAX
             ? $order->getBaseShippingAmount()
             : $order->getBaseShippingInclTax();
+
+        if ($shippingAmount === null) {
+            return null;
+        }
+
+        return (float)$shippingAmount;
     }
 
     public function sendPurchaseEvent(
