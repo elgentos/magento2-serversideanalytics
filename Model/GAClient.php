@@ -50,7 +50,7 @@ class GAClient
         $this->getRequest()->setTimestampMicros($this->getMicroTime());
 
         if ($data->getUserId()) {
-            $this->getRequest()->setUserId($data->getUserId()); // magento customer_id
+            $this->getRequest()->setUserId((string) $data->getUserId()); // magento customer_id
         }
     }
 
