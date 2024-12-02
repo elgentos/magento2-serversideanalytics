@@ -132,7 +132,7 @@ class ModuleConfiguration extends AbstractConfigProvider
             return true;
         }
 
-        return true;
+        return false;
     }
 
     public function getTriggerMode(int|null|string $storeId = null): ?int
