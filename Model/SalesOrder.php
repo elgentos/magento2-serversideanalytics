@@ -71,7 +71,7 @@ class SalesOrder extends AbstractModel
     }
 
     /**
-     * Attemt to get the current GA User id from cookies, database or generating it.
+     * Attemt to get the current GA Session id from cookies, database or generating it.
      */
     public function getCurrentGaSessionId(int|null|string $storeId = null): string
     {
