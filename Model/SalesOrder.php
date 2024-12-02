@@ -47,10 +47,10 @@ class SalesOrder extends AbstractModel
      */
     public function setGaData(int|null|string $storeId = null, null|string $gaUserId = null, int|null|string $gaSessionId = null): static
     {
-        return $this->setData([
-            'ga_user_id' => $gaUserId ?? $this->getCurrentGaUserId(),
-            'ga_session_id' => $gaSessionId ?? $this->getCurrentGaSessionId($storeId),
-        ]);
+        $this->setData('ga_user_id', $gaUserId ?? $this->getCurrentGaUserId());
+        $this->setData('ga_session_id', $gaSessionId ?? $this->getCurrentGaSessionId($storeId));
+
+        return $this;
     }
 
     /**
