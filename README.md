@@ -6,7 +6,7 @@ That problem arises due to the fact that a certain number of people close the br
 
 Another reason why this problem arises is that people decide to pay at a later point in time through a different platform (like the PSP's), using a link in an email for example.
 
-## Installations
+## Installation
 
 ```bash
 composer require elgentos/serversideanalytics2
@@ -30,11 +30,9 @@ mutation AddGaUserId($cartId: String!, $gaUserId: String, $gaSessionId: String) 
                     }
 ```
 
-## Caveats
-- This extension disables the JS Purchase Event on the success page altogether. It will however track the pageview.
-
 ## Further info
-- Compatible with UA Measurement Protocol and GA4 Measurement Protocol;
+- Compatible with GA4 Measurement Protocol;
+- When using YireoGTM, you can either disable the purchase event on the success page, or simply not send it to GA with GTM. Or just keep it, since Google will fix double transactionId's
 - Debugging is enabled when Magento is in developer mode. See `var/log/system.log` for the log;
 - Exceptions will be logged to `var/log/exceptions.log`;
 - The products in the payload are retrieve on invoice-basis, not on order-basis;
