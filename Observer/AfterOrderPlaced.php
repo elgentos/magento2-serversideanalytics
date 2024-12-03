@@ -13,6 +13,7 @@ use Elgentos\ServerSideAnalytics\Config\ModuleConfiguration;
 use Elgentos\ServerSideAnalytics\Model\GAClient;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\Collection;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
+use Elgentos\ServerSideAnalytics\Model\SalesOrderFactory;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
 use Elgentos\ServerSideAnalytics\Model\SendPurchaseEvent;
 use Magento\Framework\Event\Observer;
@@ -25,6 +26,7 @@ class AfterOrderPlaced implements ObserverInterface
         protected readonly ModuleConfiguration $moduleConfiguration,
         protected readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
         protected readonly SalesOrderRepository $elgentosSalesOrderRepository,
+        protected readonly SalesOrderFactory $elgentosSalesOrderFactory,
         protected readonly GAClient $gaclient,
         protected readonly SendPurchaseEvent $sendPurchaseEvent,
     ) {
@@ -35,10 +37,6 @@ class AfterOrderPlaced implements ObserverInterface
         $quote = $observer->getQuote();
         $order = $observer->getOrder();
 
-        if (!$quote) {
-            return;
-        }
-
         if (!$order) {
             return;
         }
@@ -47,17 +45,32 @@ class AfterOrderPlaced implements ObserverInterface
             return;
         }
 
-        /** @var Collection $elgentosSalesOrderCollection */
-        $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
-        $elgentosSalesOrderData       = $elgentosSalesOrderCollection
-            ->addFieldToFilter('quote_id', $quote->getId())
-            ->getFirstItem();
+        if ($quote) {
+            // Quote should've already been created.
+            /** @var Collection $elgentosSalesOrderCollection */
+            $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
+            /** @var SalesOrder $elgentosSalesOrderData */
+            $elgentosSalesOrderData = $elgentosSalesOrderCollection
+                ->addFieldToFilter('quote_id', $quote->getId())
+                ->getFirstItem();
 
-        if (empty($elgentosSalesOrderData->getData('quote_id'))) {
-            return;
+            if (empty($elgentosSalesOrderData->getData('quote_id'))) {
+                return;
+            }
+
+            $elgentosSalesOrderData->setData('order_id', $order->getId());
         }
 
-        $elgentosSalesOrderData->setData('order_id', $order->getId());
+        if (!isset($elgentosSalesOrderData)) {
+            /** @var SalesOrder $elgentosSalesOrderData */
+            $elgentosSalesOrderData = $this->elgentosSalesOrderFactory->create();
+            $elgentosSalesOrderData->setData([
+                'order_id' => $order->getId(),
+                'quote_id' => $quote?->getId()
+            ]);
+
+            $elgentosSalesOrderData->setGaData(storeId: $order->getStoreId());
+        }
 
         try {
             $this->elgentosSalesOrderRepository->save($elgentosSalesOrderData);
