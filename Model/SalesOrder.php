@@ -24,13 +24,13 @@ class SalesOrder extends AbstractModel
     public function __construct(
         Context $context,
         Registry $registry,
-        SalesOrderResource $resource = null,
-        AbstractDb $resourceCollection = null,
         protected readonly ModuleConfiguration $moduleConfiguration,
         protected readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
         protected readonly SalesOrderRepository $elgentosSalesOrderRepository,
         protected readonly CookieManagerInterface $cookieManager,
         protected readonly GAClient $gaclient,
+        SalesOrderResource $resource = null,
+        AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
