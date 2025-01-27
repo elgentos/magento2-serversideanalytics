@@ -194,6 +194,7 @@ class SendPurchaseEvent
 
         // Get billing address and set phone number and address details
         $billingAddress = $order->getBillingAddress();
+
         if ($billingAddress) {
             $billingPhoneNumber = $billingAddress->getTelephone();
             if ($billingPhoneNumber) {
@@ -204,7 +205,7 @@ class SendPurchaseEvent
             $userDataHelper->addAddress(
                 $billingAddress->getFirstname(),
                 $billingAddress->getLastname(),
-                $billingAddress->getStreetFull(),
+                $billingAddress->getStreet(),
                 $billingAddress->getCity(),
                 $billingAddress->getRegion(),
                 $billingAddress->getPostcode(),
@@ -223,7 +224,7 @@ class SendPurchaseEvent
             $userDataHelper->addAddress(
                 $shippingAddress->getFirstname(),
                 $shippingAddress->getLastname(),
-                $shippingAddress->getStreetFull(),
+                $shippingAddress->getStreet(),
                 $shippingAddress->getCity(),
                 $shippingAddress->getRegion(),
                 $shippingAddress->getPostcode(),
