@@ -161,7 +161,6 @@ class SalesOrder extends AbstractModel
             $gaCookieSessionsCount,
             $gaCookieEngagedSession,
             $gaCookieLastEventTime,
-            $gaCookieCountdown,
             $unknownZero1,
             $unknownZero2,
             $gaCookieEngagedTime,
