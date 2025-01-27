@@ -205,7 +205,7 @@ class SendPurchaseEvent
             $userDataHelper->addAddress(
                 $billingAddress->getFirstname(),
                 $billingAddress->getLastname(),
-                $billingAddress->getStreet(),
+                implode(' ', $billingAddress->getStreet()),
                 $billingAddress->getCity(),
                 $billingAddress->getRegion(),
                 $billingAddress->getPostcode(),
@@ -224,7 +224,7 @@ class SendPurchaseEvent
             $userDataHelper->addAddress(
                 $shippingAddress->getFirstname(),
                 $shippingAddress->getLastname(),
-                $shippingAddress->getStreet(),
+                implode(' ', $shippingAddress->getStreet()),
                 $shippingAddress->getCity(),
                 $shippingAddress->getRegion(),
                 $shippingAddress->getPostcode(),
