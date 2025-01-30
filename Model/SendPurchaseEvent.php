@@ -33,7 +33,8 @@ class SendPurchaseEvent
         protected readonly ManagerInterface $event,
         protected readonly OrderRepositoryInterface $orderRepository,
         protected readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
-        protected readonly SalesOrderRepository $elgentosSalesOrderRepository
+        protected readonly SalesOrderRepository $elgentosSalesOrderRepository,
+        protected readonly UserDataProvider $userDataProvider
     ) {
     }
 
@@ -184,12 +185,10 @@ class SendPurchaseEvent
     }
 
     protected function collectUserData(Order $order){
-        $userDataHelper = new UserDataProvider();
-
         $customerEmail = $order->getCustomerEmail();
 
         if ($customerEmail) {
-            $userDataHelper->setEmail($customerEmail);
+            $this->userDataProvider->setEmail($customerEmail);
         }
 
         // Get billing address and set phone number and address details
@@ -198,11 +197,11 @@ class SendPurchaseEvent
         if ($billingAddress) {
             $billingPhoneNumber = $billingAddress->getTelephone();
             if ($billingPhoneNumber) {
-                $userDataHelper->setPhoneNumber($billingPhoneNumber);
+                $this->userDataProvider->setPhoneNumber($billingPhoneNumber);
             }
 
             // Add address
-            $userDataHelper->addAddress(
+            $this->userDataProvider->addAddress(
                 $billingAddress->getFirstname(),
                 $billingAddress->getLastname(),
                 implode(' ', $billingAddress->getStreet()),
@@ -218,10 +217,10 @@ class SendPurchaseEvent
         if ($shippingAddress) {
             $shippingPhoneNumber = $shippingAddress->getTelephone();
             if ($shippingPhoneNumber) {
-                $userDataHelper->setPhoneNumber($shippingPhoneNumber);
+                $this->userDataProvider->setPhoneNumber($shippingPhoneNumber);
             }
 
-            $userDataHelper->addAddress(
+            $this->userDataProvider->addAddress(
                 $shippingAddress->getFirstname(),
                 $shippingAddress->getLastname(),
                 implode(' ', $shippingAddress->getStreet()),
@@ -232,7 +231,7 @@ class SendPurchaseEvent
             );
         }
 
-        return $userDataHelper->toArray();
+        return $this->userDataProvider->toArray();
     }
 
     /**
