@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace Elgentos\ServerSideAnalytics\Model;
 
 use Elgentos\ServerSideAnalytics\Config\ModuleConfiguration;
-use Elgentos\ServerSideAnalytics\Helper\UserDataHelper;
+use Elgentos\ServerSideAnalytics\Service\UserDataProvider;
 use Elgentos\ServerSideAnalytics\Logger\Logger;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
 use Elgentos\ServerSideAnalytics\Model\Source\CurrencySource;
@@ -184,7 +184,7 @@ class SendPurchaseEvent
     }
 
     protected function collectUserData(Order $order){
-        $userDataHelper = new UserDataHelper();
+        $userDataHelper = new UserDataProvider();
 
         $customerEmail = $order->getCustomerEmail();
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace Elgentos\ServerSideAnalytics\Helper;
+namespace Elgentos\ServerSideAnalytics\Service;
 
-class UserDataHelper
+class UserDataProvider
 {
     private ?array $sha256_email_address = [];
     private ?array $sha256_phone_number = [];
