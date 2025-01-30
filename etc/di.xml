@@ -24,7 +24,5 @@
         </arguments>
     </type>
 
-    <type name="Elgentos\ServerSideAnalytics\Service\UserDataService">
-        <shared>true</shared>
-    </type>
+    <type name="Elgentos\ServerSideAnalytics\Service\UserDataProvider"/>
 </config>
