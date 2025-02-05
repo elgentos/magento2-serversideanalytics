@@ -23,4 +23,6 @@
             <argument name="configWriter" xsi:type="object">Magento\Framework\App\Config\Storage\WriterInterface</argument>
         </arguments>
     </type>
+
+    <type name="Elgentos\ServerSideAnalytics\Service\UserDataProvider"/>
 </config>

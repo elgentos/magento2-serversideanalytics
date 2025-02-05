@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace Elgentos\ServerSideAnalytics\Model;
 
+use Br33f\Ga4\MeasurementProtocol\Dto\Common\UserAddress;
+use Br33f\Ga4\MeasurementProtocol\Dto\Common\UserDataItem;
 use Br33f\Ga4\MeasurementProtocol\Dto\Event\PurchaseEvent;
 use Br33f\Ga4\MeasurementProtocol\Dto\Parameter\ItemParameter;
 use Br33f\Ga4\MeasurementProtocol\Dto\Request\BaseRequest;
@@ -115,6 +117,32 @@ class GAClient
         $this->getPurchaseEvent()->addItem($itemParameter);
     }
 
+    public function addUserDataItems($userDataItems){
+        foreach ($userDataItems as $key => $userDataItem) {
+            $this->addUserDataItem($key, $userDataItem);
+        }
+    }
+
+    public function addUserDataItem($key, $userDataItem){
+        if($key === 'address'){
+            foreach($userDataItem as $addressData){
+                $userAddress = new UserAddress();
+
+                foreach($addressData as $addressKey => $addressValue){
+                    $addressDataItem = new UserDataItem($addressKey, $addressValue);
+
+                    $userAddress->addUserAddressItem($addressDataItem);
+                }
+
+                $this->getRequest()->getUserData()->addUserAddress($userAddress);
+            }
+        }else{
+            $userDataItem = new UserDataItem($key, $userDataItem);
+
+            $this->getRequest()->addUserDataItem($userDataItem);
+        }
+    }
+
     /**
      * @throws LocalizedException
      */
@@ -142,9 +170,9 @@ class GAClient
         $this->createLog(
             "Request: ",
             [
-            "storeId" => $storeId,
-            "measurementId" => $service->getMeasurementId(),
-            "body" => $this->getRequest()->export()
+                "storeId" => $storeId,
+                "measurementId" => $service->getMeasurementId(),
+                "body" => $this->getRequest()->export()
             ]
         );
         $this->createLog('Response: ', [$response->getStatusCode()]);

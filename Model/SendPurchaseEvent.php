@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Elgentos\ServerSideAnalytics\Model;
 
 use Elgentos\ServerSideAnalytics\Config\ModuleConfiguration;
+use Elgentos\ServerSideAnalytics\Service\UserDataProvider;
 use Elgentos\ServerSideAnalytics\Logger\Logger;
 use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactory;
 use Elgentos\ServerSideAnalytics\Model\Source\CurrencySource;
@@ -32,7 +33,8 @@ class SendPurchaseEvent
         protected readonly ManagerInterface $event,
         protected readonly OrderRepositoryInterface $orderRepository,
         protected readonly CollectionFactory $elgentosSalesOrderCollectionFactory,
-        protected readonly SalesOrderRepository $elgentosSalesOrderRepository
+        protected readonly SalesOrderRepository $elgentosSalesOrderRepository,
+        protected readonly UserDataProvider $userDataProvider
     ) {
     }
 
@@ -113,7 +115,9 @@ class SendPurchaseEvent
 
         $transactionDataObject = $this->getTransactionDataObject($order, $elgentosSalesOrder);
         $products = $this->collectProducts($order);
-        $this->sendPurchaseEvent($gaclient, $transactionDataObject, $products, $trackingDataObject, $orderStoreId);
+        $userData = $this->collectUserData($order);
+
+        $this->sendPurchaseEvent($gaclient, $transactionDataObject, $products, $trackingDataObject, $userData, $orderStoreId);
 
         $elgentosSalesOrder->setData('trigger', $eventName);
         $elgentosSalesOrder->setData('send_at', date('Y-m-d H:i:s'));
@@ -178,6 +182,56 @@ class SendPurchaseEvent
         }
 
         return $products;
+    }
+
+    protected function collectUserData(Order $order){
+        $customerEmail = $order->getCustomerEmail();
+
+        if ($customerEmail) {
+            $this->userDataProvider->setEmail($customerEmail);
+        }
+
+        // Get billing address and set phone number and address details
+        $billingAddress = $order->getBillingAddress();
+
+        if ($billingAddress) {
+            $billingPhoneNumber = $billingAddress->getTelephone();
+            if ($billingPhoneNumber) {
+                $this->userDataProvider->setPhoneNumber($billingPhoneNumber);
+            }
+
+            // Add address
+            $this->userDataProvider->addAddress(
+                $billingAddress->getFirstname(),
+                $billingAddress->getLastname(),
+                implode(' ', $billingAddress->getStreet()),
+                $billingAddress->getCity(),
+                $billingAddress->getRegion(),
+                $billingAddress->getPostcode(),
+                $billingAddress->getCountryId()
+            );
+        }
+
+        // Optionally process shipping address if needed
+        $shippingAddress = $order->getShippingAddress();
+        if ($shippingAddress) {
+            $shippingPhoneNumber = $shippingAddress->getTelephone();
+            if ($shippingPhoneNumber) {
+                $this->userDataProvider->setPhoneNumber($shippingPhoneNumber);
+            }
+
+            $this->userDataProvider->addAddress(
+                $shippingAddress->getFirstname(),
+                $shippingAddress->getLastname(),
+                implode(' ', $shippingAddress->getStreet()),
+                $shippingAddress->getCity(),
+                $shippingAddress->getRegion(),
+                $shippingAddress->getPostcode(),
+                $shippingAddress->getCountryId()
+            );
+        }
+
+        return $this->userDataProvider->toArray();
     }
 
     /**
@@ -245,11 +299,12 @@ class SendPurchaseEvent
         DataObject $transactionDataObject,
         array $products,
         DataObject $trackingDataObject,
+        array $userData,
         int|string|null $orderStoreId
     ): void {
         try {
             $gaclient->setTransactionData($transactionDataObject);
-
+            $gaclient->addUserDataItems($userData);
             $gaclient->addProducts($products);
         } catch (\Exception $e) {
             $gaclient->createLog($e);
