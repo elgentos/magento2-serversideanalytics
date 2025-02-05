@@ -107,12 +107,7 @@ class SendPurchaseEvent
                 'document_path' => '/checkout/onepage/success/'
             ]
         );
-
-        $userId = $order->getCustomerId();
-        if ($userId) {
-            $trackingDataObject->setData('user_id', $userId);
-        }
-
+        
         $transactionDataObject = $this->getTransactionDataObject($order, $elgentosSalesOrder);
         $products = $this->collectProducts($order);
         $userData = $this->collectUserData($order);
