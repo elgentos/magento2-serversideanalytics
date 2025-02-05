@@ -50,10 +50,6 @@ class GAClient
         $this->getRequest()->setClientId($data->getClientId()); // '2133506694.1448249699'
 
         $this->getRequest()->setTimestampMicros($this->getMicroTime());
-
-        if ($data->getUserId()) {
-            $this->getRequest()->setUserId((string) $data->getUserId()); // magento customer_id
-        }
     }
 
     public function getRequest()
