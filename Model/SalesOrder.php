@@ -143,30 +143,13 @@ class SalesOrder extends AbstractModel
         return $this->cookieManager->getCookie('_ga_' . $gaMeasurementId) ?? '';
     }
 
-    public function getSessionIdFromCookie(?string $gaCookie = '' /** GS1.1.1732016998.2.1.1732018235.0.0.692404937 */): ?string
-    {
-        $gaCookie = explode(
-            '.',
-            $gaCookie ?? ''
-        );
-
-        if (count($gaCookie) < 9) {
+    public function getSessionIdFromCookie(?string $gaCookie = '' /** GS1.1.1732016998.2.1.1732018235.0.0.692404937 OR GS2.1.s1748246127$o6$g1$t1748251071$j60$l0$h263196385$dQn_oPl1JlfID64muTcg9EeKK4oR_eD4EGg */): ?string
+    {        
+        if (!preg_match('/^GS[0-9]\.[0-9]\.s?(?<session_id>[0-9]+)/', $gaCookie, $matches) || !$matches['session_id']) {
             return null;
         }
 
-        [
-            $gaCookieVersion,
-            $gaCookieDomainComponents,
-            $gaCookieSessionStartTime,
-            $gaCookieSessionsCount,
-            $gaCookieEngagedSession,
-            $gaCookieLastEventTime,
-            $unknownZero1,
-            $unknownZero2,
-            $gaCookieEngagedTime,
-        ] = $gaCookie;
-
-        return (string) $gaCookieSessionStartTime;
+        return (string) $matches['session_id'];
     }
 
     /**
