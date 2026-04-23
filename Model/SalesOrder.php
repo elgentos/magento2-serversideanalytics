@@ -29,8 +29,8 @@ class SalesOrder extends AbstractModel
         protected readonly SalesOrderRepository $elgentosSalesOrderRepository,
         protected readonly CookieManagerInterface $cookieManager,
         protected readonly GAClient $gaclient,
-        SalesOrderResource $resource = null,
-        AbstractDb $resourceCollection = null,
+        ?SalesOrderResource $resource = null,
+        ?AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
