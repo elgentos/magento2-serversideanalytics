@@ -145,7 +145,7 @@ class ModuleConfiguration extends AbstractConfigProvider
         return null;
     }
 
-    public function getPaymentMethodsForTrigger(int $mode = null, int|null|string $storeId = null): array
+    public function getPaymentMethodsForTrigger(?int $mode = null, int|null|string $storeId = null): array
     {
         switch ($mode) {
             case TriggerMode::PLACED:
