@@ -46,9 +46,11 @@ class SendPurchaseEvent
         $orderStoreId = $order->getStoreId();
 
         $gaUserDatabaseId = $order->getId();
+        $field = 'order_id';
 
         if (!$gaUserDatabaseId) {
             $gaUserDatabaseId = $order->getQuoteId();
+            $field = 'quote_id';
         }
 
         if (!$gaUserDatabaseId) {
@@ -63,7 +65,7 @@ class SendPurchaseEvent
             return;
         }
 
-        $elgentosSalesOrder = $this->getElgentosSalesOrder($gaUserDatabaseId);
+        $elgentosSalesOrder = $this->getElgentosSalesOrder($gaUserDatabaseId, $field);
 
         if (!$elgentosSalesOrder) {
             $this->emulation->stopEnvironmentEmulation();
@@ -121,17 +123,14 @@ class SendPurchaseEvent
         $this->emulation->stopEnvironmentEmulation();
     }
 
-    protected function getElgentosSalesOrder($gaUserDatabaseId): ?SalesOrder
+    protected function getElgentosSalesOrder($gaUserDatabaseId, $field = 'order_id'): ?SalesOrder
     {
         $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
         /** @var SalesOrder $elgentosSalesOrder */
         $elgentosSalesOrder = $elgentosSalesOrderCollection
             ->addFieldToFilter(
-                ['quote_id', 'order_id'],
-                [
-                    ['eq' => $gaUserDatabaseId],
-                    ['eq' => $gaUserDatabaseId]
-                ]
+                $field,
+                $gaUserDatabaseId
             )
             ->getFirstItem();
 
