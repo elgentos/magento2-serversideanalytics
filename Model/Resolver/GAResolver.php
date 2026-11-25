@@ -14,7 +14,9 @@ use Elgentos\ServerSideAnalytics\Model\ResourceModel\SalesOrder\CollectionFactor
 use Elgentos\ServerSideAnalytics\Model\SalesOrder;
 use Elgentos\ServerSideAnalytics\Model\SalesOrderRepository;
 use Magento\Framework\GraphQl\Config\Element\Field;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\GraphQl\Exception\GraphQlAuthorizationException;
+use Magento\Framework\GraphQl\Exception\GraphQlNoSuchEntityException;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\GraphQl\Model\Query\Context;
@@ -45,9 +47,22 @@ class GAResolver implements ResolverInterface
             throw new GraphQlAuthorizationException(__('The current customer isn\'t authorized.'));
         }
 
-        $cartId = is_numeric($input['cartId'])
-            ? $input['cartId']
-            : $this->maskedQuoteIdToQuoteId->execute($input['cartId']);
+        try {
+            $cartId = is_numeric($input['cartId'])
+                ? (int) $input['cartId']
+                : $this->maskedQuoteIdToQuoteId->execute($input['cartId']);
+            $quote = $this->quoteRepository->get($cartId);
+        } catch (NoSuchEntityException $e) {
+            throw new GraphQlNoSuchEntityException(__('Could not find a cart with ID "%1"', $input['cartId']));
+        }
+
+        // A cart that belongs to a customer can only be changed by that customer
+        $quoteCustomerId = (int) $quote->getCustomerId();
+        $isCustomerCart = $quoteCustomerId > 0;
+        $currentCustomerId = (int) $context->getUserId();
+        if (($isCustomerCart || is_numeric($input['cartId'])) && $quoteCustomerId !== $currentCustomerId) {
+            throw new GraphQlAuthorizationException(__('The current customer isn\'t authorized.'));
+        }
 
         /** @var Collection $elgentosSalesOrderCollection */
         $elgentosSalesOrderCollection = $this->elgentosSalesOrderCollectionFactory->create();
